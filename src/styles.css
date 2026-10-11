@@ -4,3 +4,115 @@
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 }
+
+/* page transitions, see docs/superpowers/specs/2026-10-11-page-transition-design.md */
+
+:root {
+  --ease-notch: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+::view-transition-group(*) {
+  animation-duration: 120ms;
+  animation-timing-function: var(--ease-notch);
+}
+
+/* row → window morph */
+::view-transition-group(.work-box),
+::view-transition-group(.work-icon),
+::view-transition-group(.work-title) {
+  animation-duration: 300ms;
+}
+
+::view-transition-group(.work-box) {
+  overflow: clip;
+  border-radius: var(--radius-lg);
+}
+
+::view-transition-old(.work-box) {
+  animation: 100ms var(--ease-notch) both vt-fade-out;
+}
+
+::view-transition-new(.work-box) {
+  animation: 200ms var(--ease-notch) both vt-fade-in;
+}
+
+/* scale text by height so "Lyft" grows into the title instead of stretching */
+::view-transition-old(.work-title),
+::view-transition-new(.work-title) {
+  block-size: 100%;
+  inline-size: auto;
+}
+
+/* the two labels don't share text, so swap them quickly instead of ghosting */
+::view-transition-old(.work-title) {
+  animation: 90ms var(--ease-notch) both vt-fade-out;
+}
+
+::view-transition-new(.work-title) {
+  animation: 150ms var(--ease-notch) both vt-fade-in;
+}
+
+html:active-view-transition-type(forward)::view-transition-old(root) {
+  animation: 60ms var(--ease-notch) both vt-blur-out;
+}
+
+html:active-view-transition-type(forward)::view-transition-new(root) {
+  animation: 150ms var(--ease-notch) both vt-fade-in;
+}
+
+html:active-view-transition-type(back)::view-transition-group(.work-box),
+html:active-view-transition-type(back)::view-transition-group(.work-icon),
+html:active-view-transition-type(back)::view-transition-group(.work-title) {
+  animation-duration: 280ms;
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-blur-out {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+/* body text settling in while the morph finishes */
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    translate: 0 4px;
+  }
+}
+
+.blur-in {
+  animation: blur-in 120ms var(--ease-notch) both;
+  animation-delay: calc(150ms + var(--i, 0) * 25ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation: none !important;
+  }
+
+  ::view-transition-old(*) {
+    animation: 100ms ease both vt-fade-out !important;
+  }
+
+  ::view-transition-new(*) {
+    animation: 100ms ease both vt-fade-in !important;
+  }
+
+  .blur-in {
+    animation: none;
+  }
+}
