@@ -16,16 +16,16 @@
   animation-timing-function: var(--ease-notch);
 }
 
-/* row → window morph */
+/* row → page morph */
 ::view-transition-group(.work-box),
 ::view-transition-group(.work-icon),
 ::view-transition-group(.work-title) {
   animation-duration: 300ms;
 }
 
+/* clip so the page reveals downward as the row grows */
 ::view-transition-group(.work-box) {
   overflow: clip;
-  border-radius: var(--radius-lg);
 }
 
 ::view-transition-old(.work-box) {

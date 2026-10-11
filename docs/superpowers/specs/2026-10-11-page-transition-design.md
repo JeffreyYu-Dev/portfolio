@@ -129,3 +129,12 @@ No test framework exists; verification is manual in the browser via `npm run dev
 - Text scramble on the title.
 - Sound.
 - Transitions for `/posts/*`.
+
+## Revision (2026-10-11): window chrome removed
+
+At the user's request the macOS window styling (traffic-light title bar and
+dissolving border) is gone. `WindowChrome` was deleted; the work page's
+`<section>` now carries `view-transition-name: work-{id}` /
+`view-transition-class: work-box` directly. The row still grows into the page
+(the group clips so content reveals downward), the logo still flies, the title
+still swaps, and body text still blurs in. Timings are unchanged.
