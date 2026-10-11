@@ -27,10 +27,10 @@ function RouteComponent() {
       </header>
       <main className="mt-4">
         {/* vt() pairs these with the matching row on the home page */}
-        <section style={vt(entry.id)}>
+        <section style={vt("work", entry.id)}>
           <div className="flex gap-2 items-center">
-            <WorkLogo entry={entry} size="lg" style={vt(entry.id, "icon")} />
-            <h1 className="text-xl" style={vt(entry.id, "title")}>
+            <WorkLogo entry={entry} size="lg" style={vt("work", entry.id, "icon")} />
+            <h1 className="text-xl" style={vt("work", entry.id, "title")}>
               {entry.role} @ {entry.company}
             </h1>
           </div>

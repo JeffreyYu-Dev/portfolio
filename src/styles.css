@@ -17,51 +17,51 @@
 }
 
 /* row → page morph */
-::view-transition-group(.work-box),
-::view-transition-group(.work-icon),
-::view-transition-group(.work-title) {
+::view-transition-group(.item-box),
+::view-transition-group(.item-icon),
+::view-transition-group(.item-title) {
   animation-duration: 300ms;
 }
 
 /* clip so the page reveals downward as the row grows */
-::view-transition-group(.work-box) {
+::view-transition-group(.item-box) {
   overflow: clip;
 }
 
-::view-transition-old(.work-box) {
+::view-transition-old(.item-box) {
   animation: 100ms var(--ease-notch) both vt-fade-out;
 }
 
-::view-transition-new(.work-box) {
+::view-transition-new(.item-box) {
   animation: 200ms var(--ease-notch) both vt-fade-in;
 }
 
 /* scale text by height so "Lyft" grows into the title instead of stretching */
-::view-transition-old(.work-title),
-::view-transition-new(.work-title) {
+::view-transition-old(.item-title),
+::view-transition-new(.item-title) {
   block-size: 100%;
   inline-size: auto;
 }
 
 /* the two labels don't share text, so swap them quickly instead of ghosting */
-::view-transition-old(.work-title) {
+::view-transition-old(.item-title) {
   animation: 90ms var(--ease-notch) both vt-fade-out;
 }
 
-::view-transition-new(.work-title) {
+::view-transition-new(.item-title) {
   animation: 150ms var(--ease-notch) both vt-fade-in;
 }
 
 /* rows that weren't clicked have no twin on the other page, so they fade with it */
-::view-transition-old(.work-box):only-child,
-::view-transition-old(.work-icon):only-child,
-::view-transition-old(.work-title):only-child {
+::view-transition-old(.item-box):only-child,
+::view-transition-old(.item-icon):only-child,
+::view-transition-old(.item-title):only-child {
   animation: 60ms var(--ease-notch) both vt-fade-out;
 }
 
-::view-transition-new(.work-box):only-child,
-::view-transition-new(.work-icon):only-child,
-::view-transition-new(.work-title):only-child {
+::view-transition-new(.item-box):only-child,
+::view-transition-new(.item-icon):only-child,
+::view-transition-new(.item-title):only-child {
   /* wait for the clicked row to land so it doesn't pass through the others */
   animation: 150ms var(--ease-notch) 150ms both vt-fade-in;
 }
@@ -74,9 +74,9 @@ html:active-view-transition-type(forward)::view-transition-new(root) {
   animation: 150ms var(--ease-notch) both vt-fade-in;
 }
 
-html:active-view-transition-type(back)::view-transition-group(.work-box),
-html:active-view-transition-type(back)::view-transition-group(.work-icon),
-html:active-view-transition-type(back)::view-transition-group(.work-title) {
+html:active-view-transition-type(back)::view-transition-group(.item-box),
+html:active-view-transition-type(back)::view-transition-group(.item-icon),
+html:active-view-transition-type(back)::view-transition-group(.item-title) {
   animation-duration: 280ms;
 }
 

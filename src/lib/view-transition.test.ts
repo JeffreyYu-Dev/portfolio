@@ -1,30 +1,40 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { projects } from "../data/projects.ts";
 import { work } from "../data/work.ts";
 import { transitionTypes, vt } from "./view-transition.ts";
 
 const at = (pathname: string) => ({ pathname });
 
-test("names are derived from the work id", () => {
-  assert.equal(vt("Lyft").viewTransitionName, "work-Lyft");
-  assert.equal(vt("Lyft", "icon").viewTransitionName, "work-Lyft-icon");
-  assert.equal(vt("Lyft", "title").viewTransitionName, "work-Lyft-title");
+test("names are derived from the section and id", () => {
+  assert.equal(vt("work", "Lyft").viewTransitionName, "work-Lyft");
+  assert.equal(vt("work", "Lyft", "icon").viewTransitionName, "work-Lyft-icon");
+  assert.equal(
+    vt("project", "Lyft", "title").viewTransitionName,
+    "project-Lyft-title",
+  );
 });
 
 test("each part gets the class styles.css animates", () => {
-  assert.equal(vt("Lyft").viewTransitionClass, "work-box");
-  assert.equal(vt("Lyft", "icon").viewTransitionClass, "work-icon");
-  assert.equal(vt("Lyft", "title").viewTransitionClass, "work-title");
+  assert.equal(vt("work", "Lyft").viewTransitionClass, "item-box");
+  assert.equal(vt("work", "Lyft", "icon").viewTransitionClass, "item-icon");
+  assert.equal(vt("project", "a", "title").viewTransitionClass, "item-title");
 });
 
 test("names are always valid css identifiers", () => {
-  assert.equal(vt("Big Co & Sons").viewTransitionName, "work-Big-Co---Sons");
-  assert.equal(vt("3m", "icon").viewTransitionName, "work-3m-icon");
+  assert.equal(
+    vt("work", "Big Co & Sons").viewTransitionName,
+    "work-Big-Co---Sons",
+  );
+  assert.equal(vt("project", "3d", "icon").viewTransitionName, "project-3d-icon");
 });
 
 // duplicate names make the browser skip the whole transition
-test("every work entry gets a unique name", () => {
-  const names = work.map((w) => vt(w.id).viewTransitionName);
+test("every work and project entry gets a unique name", () => {
+  const names = [
+    ...work.map((w) => vt("work", w.id).viewTransitionName),
+    ...projects.map((p) => vt("project", p.id).viewTransitionName),
+  ];
   assert.equal(new Set(names).size, names.length);
 });
 
@@ -32,6 +42,17 @@ test("home to work is forward", () => {
   assert.deepEqual(
     transitionTypes({ fromLocation: at("/"), toLocation: at("/work/Lyft") }),
     ["forward"],
+  );
+});
+
+test("home to a project is forward, and back again", () => {
+  assert.deepEqual(
+    transitionTypes({ fromLocation: at("/"), toLocation: at("/projects/x") }),
+    ["forward"],
+  );
+  assert.deepEqual(
+    transitionTypes({ fromLocation: at("/projects/x"), toLocation: at("/") }),
+    ["back"],
   );
 });
 

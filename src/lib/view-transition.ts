@@ -1,13 +1,21 @@
 type Location = { pathname: string };
 
-// style for an element that morphs between the home row and its work page:
+// pages that open from a home page row
+const detailPages = ["/work/", "/projects/"];
+const isDetail = (path: string) => detailPages.some((p) => path.startsWith(p));
+
+// style for an element that morphs between a home page row and its page:
 // the name pairs it with its twin, the class picks the animation in styles.css
-export function vt(id: string, part?: "icon" | "title") {
+export function vt(
+  section: "work" | "project",
+  id: string,
+  part?: "icon" | "title",
+) {
   // view-transition-name must be a valid css identifier, so anything odd in the id becomes "-"
-  const safe = id.replace(/[^a-zA-Z0-9_-]/g, "-");
+  const name = `${section}-${id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   return {
-    viewTransitionName: part ? `work-${safe}-${part}` : `work-${safe}`,
-    viewTransitionClass: `work-${part ?? "box"}`,
+    viewTransitionName: part ? `${name}-${part}` : name,
+    viewTransitionClass: `item-${part ?? "box"}`,
   };
 }
 
@@ -25,7 +33,7 @@ export function transitionTypes({
   const from = fromLocation.pathname;
   const to = toLocation.pathname;
   if (from === to) return false;
-  if (from === "/" && to.startsWith("/work/")) return ["forward"];
-  if (from.startsWith("/work/") && to === "/") return ["back"];
+  if (from === "/" && isDetail(to)) return ["forward"];
+  if (isDetail(from) && to === "/") return ["back"];
   return ["fade"];
 }
