@@ -1,4 +1,5 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
+import { transitionTypes } from './lib/view-transition'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
@@ -7,6 +8,8 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    // also applies to the browser back/forward buttons
+    defaultViewTransition: { types: transitionTypes },
   })
 
   return router
