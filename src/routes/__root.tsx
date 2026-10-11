@@ -38,7 +38,7 @@ export const Route = createRootRoute({
 function RootLayout() {
   return (
     <>
-      {/*<Notch />*/}
+      <Notch />
       <div className="mx-auto w-md mt-20">
         <Outlet />
       </div>

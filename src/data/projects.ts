@@ -11,7 +11,7 @@ export type Project = {
 export const projects: Project[] = [
   {
     id: "renao",
-    name: "Renao (Dropbox Clone)",
+    name: "Renao",
     // placeholders below, fill these in
     year: "2026",
     summary: "A Dropbox clone",

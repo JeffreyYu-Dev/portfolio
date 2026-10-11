@@ -27,7 +27,7 @@ function RouteComponent() {
       <main className="mt-4">
         {/* vt() pairs these with the matching row on the home page */}
         <section style={vt("project", entry.id)}>
-          <h1 className="text-xl" style={vt("project", entry.id, "title")}>
+          <h1 className="text-lg" style={vt("project", entry.id, "title")}>
             {entry.name}
           </h1>
           <h4

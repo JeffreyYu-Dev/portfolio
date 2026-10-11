@@ -29,8 +29,12 @@ function RouteComponent() {
         {/* vt() pairs these with the matching row on the home page */}
         <section style={vt("work", entry.id)}>
           <div className="flex gap-2 items-center">
-            <WorkLogo entry={entry} size="lg" style={vt("work", entry.id, "icon")} />
-            <h1 className="text-xl" style={vt("work", entry.id, "title")}>
+            <WorkLogo
+              entry={entry}
+              size="lg"
+              style={vt("work", entry.id, "icon")}
+            />
+            <h1 className="text-lg" style={vt("work", entry.id, "title")}>
               {entry.role} @ {entry.company}
             </h1>
           </div>
@@ -43,6 +47,10 @@ function RouteComponent() {
           <div className="mt-2 blur-in" style={{ "--i": 1 } as CSSProperties}>
             <p className="text-xs mt-1">{entry.body}</p>
           </div>
+        </section>
+        <section>
+          {/*i want this to be more of a blog style*/}
+          <h1></h1>
         </section>
       </main>
     </>
