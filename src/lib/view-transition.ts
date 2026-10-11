@@ -1,9 +1,14 @@
 type Location = { pathname: string };
 
-// view-transition-name must be a valid css identifier, so anything odd in the id becomes "-"
-export function viewTransitionName(id: string, part?: "icon" | "title") {
+// style for an element that morphs between the home row and its work page:
+// the name pairs it with its twin, the class picks the animation in styles.css
+export function vt(id: string, part?: "icon" | "title") {
+  // view-transition-name must be a valid css identifier, so anything odd in the id becomes "-"
   const safe = id.replace(/[^a-zA-Z0-9_-]/g, "-");
-  return part ? `work-${safe}-${part}` : `work-${safe}`;
+  return {
+    viewTransitionName: part ? `work-${safe}-${part}` : `work-${safe}`,
+    viewTransitionClass: `work-${part ?? "box"}`,
+  };
 }
 
 // labels each navigation so styles.css can pick the matching animation

@@ -52,6 +52,20 @@
   animation: 150ms var(--ease-notch) both vt-fade-in;
 }
 
+/* rows that weren't clicked have no twin on the other page, so they fade with it */
+::view-transition-old(.work-box):only-child,
+::view-transition-old(.work-icon):only-child,
+::view-transition-old(.work-title):only-child {
+  animation: 60ms var(--ease-notch) both vt-fade-out;
+}
+
+::view-transition-new(.work-box):only-child,
+::view-transition-new(.work-icon):only-child,
+::view-transition-new(.work-title):only-child {
+  /* wait for the clicked row to land so it doesn't pass through the others */
+  animation: 150ms var(--ease-notch) 150ms both vt-fade-in;
+}
+
 html:active-view-transition-type(forward)::view-transition-old(root) {
   animation: 60ms var(--ease-notch) both vt-blur-out;
 }
