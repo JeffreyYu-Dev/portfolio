@@ -72,6 +72,8 @@ export function Listening() {
     <button
       type="button"
       onClick={() => toggleNotch()}
+      // the notch's outside-press close skips this, it toggles on its own
+      data-notch-toggle
       // the accent is picked to read on the black notch, so it's darkened for the white page
       style={
         {

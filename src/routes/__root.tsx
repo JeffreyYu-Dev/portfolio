@@ -4,7 +4,12 @@ import {
   Scripts,
   createRootRoute,
 } from "@tanstack/react-router";
+import { Boot } from "#/components/boot";
+import { Browser } from "#/components/browser";
+import { Desktop } from "#/components/desktop";
+import { Dock } from "#/components/dock";
 import { Notch } from "#/components/notch";
+import { bootScript } from "#/lib/boot";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
@@ -38,19 +43,28 @@ export const Route = createRootRoute({
 function RootLayout() {
   return (
     <>
+      <Boot />
       <Notch />
-      {/* data-page: what page-transition.ts snapshots when leaving */}
-      <div data-page className="mx-auto w-md mt-20">
-        <Outlet />
-      </div>
+      <Dock />
+      <Desktop>
+        <Browser>
+          {/* data-page: what page-transition.ts snapshots when leaving */}
+          <div data-page className="mx-auto w-md pt-20 md:py-12">
+            <Outlet />
+          </div>
+        </Browser>
+      </Desktop>
     </>
   );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // the boot script below adds data-booted before hydration
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static string, runs before first paint */}
+        <script dangerouslySetInnerHTML={{ __html: bootScript }} />
         <HeadContent />
       </head>
       <body>

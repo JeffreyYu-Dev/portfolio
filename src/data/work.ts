@@ -19,11 +19,11 @@ export const work: Work[] = [
   {
     id: "Western",
     company: "Western University",
-    role: "Researcher",
+    role: "Undergraduate Researcher",
     years: "2026",
-    dates: "May 2025 - Aug. 2025",
+    dates: "May 2026 - Aug. 2026",
     logo: WesternLogo,
-    body: "Built my own version of an LLM-based car diagnostics system from a Western research paper, running a small on-device model that talks to a larger server model to explain engine faults in plain language, tailored to each driver.",
+    body: "Built a two-tier LLM vehicle diagnostics pipeline from an IEEE paper, small enough to run over satellite links.",
   },
 ];
 

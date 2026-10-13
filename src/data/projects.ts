@@ -8,14 +8,35 @@ export type Project = {
   body: string;
 };
 
+// years are placeholders, fill these in
 export const projects: Project[] = [
   {
     id: "renao",
     name: "Renao",
-    // placeholders below, fill these in
     year: "2026",
-    summary: "A Dropbox clone",
-    body: "lorem ipsum dolor sit amet consectetur adipiscing elit duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt in culpa",
+    summary: "Cross-platform file sync client",
+    body: "A Dropbox-style sync engine in Go that only uploads the chunks that changed.",
+  },
+  {
+    id: "scribble",
+    name: "Scribble",
+    year: "2026",
+    summary: "Real-time multiplayer drawing game",
+    body: "A Go game server running each room as its own goroutine, with a React client over WebSockets.",
+  },
+  {
+    id: "calendar",
+    name: "Collaborative Calendar",
+    year: "2025",
+    summary: "Shared calendar with a Qt desktop client",
+    body: "A full-stack calendar with a Qt/QML client, a Hono API, and Postgres and Redis behind it.",
+  },
+  {
+    id: "virtual-pet",
+    name: "Virtual Pet Simulator",
+    year: "2024",
+    summary: "JavaFX game, built with a team of 5",
+    body: "A virtual pet game in JavaFX, where I led a team of five and built the save system.",
   },
 ];
 

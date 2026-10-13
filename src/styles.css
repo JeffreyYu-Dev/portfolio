@@ -9,6 +9,24 @@
   }
 }
 
+/* the boot screen, see src/components/boot.tsx. gone for a session that's already
+   booted (set by the script in __root.tsx) and without js, which could never dismiss it */
+html[data-booted] [data-boot] {
+  display: none;
+}
+
+@media (scripting: none) {
+  [data-boot] {
+    display: none;
+  }
+}
+
+@media (scripting: enabled) {
+  .boot-in {
+    transform: translateY(110%);
+  }
+}
+
 /* equalizer bars in the closed notch, see src/components/notch.tsx */
 @keyframes notch-bar {
   0%, 100% { height: 30%; }

@@ -1,6 +1,8 @@
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import gsap from "gsap";
 import { type MouseEvent, useLayoutEffect } from "react";
+import { afterBoot } from "#/lib/boot";
+import { samePath } from "#/lib/browser-address";
 import { type Activity, announce } from "#/lib/live-activity";
 
 // masked line reveal between pages, all in one continuous motion:
@@ -49,19 +51,27 @@ function leave(key: string) {
     at: performance.now(),
   };
 
-  // a frozen copy of the page plays the exit while the next page mounts underneath
+  // a frozen copy of the page plays the exit while the next page mounts underneath.
+  // on the desktop it sits in the browser card but outside the card's scroller, so
+  // the scroll reset on navigation doesn't drag it along and it doesn't hold the
+  // scroll height open. on phones the window scrolls, so it's pinned to the viewport
+  const host = page.closest<HTMLElement>("[data-ghost-host]") ?? document.body;
+  const inCard =
+    getComputedStyle(page.parentElement ?? page).overflowY !== "visible";
   const rect = page.getBoundingClientRect();
+  const origin = inCard ? host.getBoundingClientRect() : { top: 0, left: 0 };
   const ghost = page.cloneNode(true) as HTMLElement;
   ghost.removeAttribute("data-page");
   ghost.setAttribute("aria-hidden", "true");
   Object.assign(ghost.style, {
-    position: "fixed",
-    top: `${rect.top}px`,
-    left: `${rect.left}px`,
+    position: inCard ? "absolute" : "fixed",
+    top: `${rect.top - origin.top}px`,
+    left: `${rect.left - origin.left}px`,
     width: `${rect.width}px`,
     margin: "0",
     pointerEvents: "none",
-    // behind the new page so the flying title passes over the exiting lines
+    // behind the new page so the flying title passes over the exiting lines.
+    // the card's isolate keeps it above the card's own white background
     zIndex: "-1",
   });
   // the real morph elements fly from these spots, so the copies step aside
@@ -69,7 +79,7 @@ function leave(key: string) {
     el.style.visibility = "hidden";
   // no need to reload any open link previews
   for (const frame of ghost.querySelectorAll("iframe")) frame.remove();
-  document.body.append(ghost);
+  host.append(ghost);
   // hidden until the next page's first layout, see usePageEnter
   page.style.visibility = "hidden";
 
@@ -105,6 +115,16 @@ export function useLeave(key: string, activity?: Activity) {
   };
 }
 
+// useLeave for links that can point at the page you're already on (dock, browser tabs).
+// leaving hides the page until the next one mounts, and the same page never
+// remounts, so clicking the current page does nothing instead
+export function useGo(key: string) {
+  const leave = useLeave(key);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (path: string) => (e: MouseEvent<HTMLAnchorElement>) =>
+    samePath(pathname, path) ? e.preventDefault() : leave(e);
+}
+
 // call once per page: reveals its lines and flies in matching morph elements
 export function usePageEnter() {
   useLayoutEffect(() => {
@@ -124,7 +144,9 @@ export function usePageEnter() {
       for (const line of lines) line.style.overflow = "visible";
     };
 
-    const ctx = gsap.context(() => {
+    // on a session's first visit the lines wait under the boot screen until it starts leaving
+    const ctx = gsap.context(() => {});
+    const reveal = () => ctx.add(() => {
       if (reducedMotion()) {
         gsap.fromTo(
           lines.map(inner),
@@ -175,8 +197,12 @@ export function usePageEnter() {
         },
       );
     });
+    const cancel = afterBoot(reveal);
 
-    return () => ctx.revert();
+    return () => {
+      cancel();
+      ctx.revert();
+    };
   }, []);
 }
 

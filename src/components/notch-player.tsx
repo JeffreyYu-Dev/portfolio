@@ -12,9 +12,25 @@ function emit(track: Track | null) {
   for (const subscriber of subscribers) subscriber();
 }
 
+// settles once the first poll is back and its cover is decoded, so the boot screen
+// can hold the page until the notch has something to show. never rejects
+let settleFirst: () => void = () => {};
+const first = new Promise<void>((resolve) => {
+  settleFirst = resolve;
+});
+
+export const firstTrack = () => first;
+
+async function preload(src: string | undefined) {
+  if (!src) return;
+  const img = new Image();
+  img.src = src;
+  await img.decode().catch(() => {});
+}
+
 function startPolling() {
   const load = () => getTrack().then(emit, () => {});
-  load();
+  load().then(() => preload(current?.art)).then(settleFirst);
   const poll = setInterval(load, 30_000);
   const tick = setInterval(() => {
     if (current?.playing && current.progressMs !== undefined) {
@@ -221,7 +237,8 @@ export function Cover({
           <span className="block size-full rounded-[inherit] bg-white/10" />
         )}
         <span
-          className={`absolute -right-1.5 -bottom-1.5 rounded-lg bg-black p-1 transition-opacity duration-200 ${open ? "opacity-100 delay-300" : "opacity-0"}`}
+          // pops out of the cover's corner once it has nearly finished growing, on the shell's easing
+          className={`absolute -right-1.5 -bottom-1.5 rounded-lg bg-black p-1 transition-[opacity,scale] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${open ? "scale-100 opacity-100 duration-500 delay-350" : "scale-50 opacity-0 duration-150"}`}
         >
           <SpotifyLogo />
         </span>

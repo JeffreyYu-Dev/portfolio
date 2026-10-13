@@ -1,11 +1,7 @@
 import { Window } from "#/components/window";
 import { Line } from "#/components/line";
 import { Socials } from "#/components/socials";
-import {
-  Availability,
-  Listening,
-  LocalTime,
-} from "#/components/status-line";
+import { Availability, Listening, LocalTime } from "#/components/status-line";
 import { WorkLogo } from "#/components/work-logo";
 import { type Project, projects } from "#/data/projects";
 import { type Work, work } from "#/data/work";
@@ -14,6 +10,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({ component: Home });
 
+// crazy quotes :crying:
 const quote = "Skipped physics 'cause I already knew I had motion";
 const quote2 =
   "Came in as a freshman 4 years ago, came in a freshman 4 days ago.";
@@ -34,9 +31,7 @@ function WorkRow({ entry }: { entry: Work }) {
 
   return (
     <Link to="/work/$id" params={{ id: entry.id }} onClick={onClick}>
-      <div
-        className="flex justify-between text-sm hover:underline hover:bg-stone-200/30 rounded"
-      >
+      <div className="flex justify-between text-sm hover:underline rounded">
         <span className="flex items-center gap-2 ">
           <span className="flex shrink-0" {...morph(key, "icon")}>
             <WorkLogo entry={entry} size="sm" />
@@ -58,9 +53,7 @@ function ProjectRow({ entry }: { entry: Project }) {
 
   return (
     <Link to="/projects/$id" params={{ id: entry.id }} onClick={onClick}>
-      <div
-        className="flex justify-between text-sm hover:underline hover:bg-stone-200/30 rounded"
-      >
+      <div className="flex justify-between text-sm hover:underline rounded">
         <span {...morph(key, "title")}>{entry.name}</span>
         <span className="text-gray-500">
           <Line inline>{entry.year}</Line>
@@ -108,19 +101,19 @@ function Home() {
           </Line>
         </div>
         <Line>
-          <div className="mt-2">
+          <div className="mt-1">
             <Socials />
           </div>
         </Line>
       </header>
-      <main className="mt-4 flex flex-col gap-6">
+      <main className="mt-4 flex flex-col gap-4">
         <section>
           <Line>
             <h1 className="text-xs text-muted-foreground text-gray-500">
               Work
             </h1>
           </Line>
-          <ul className="mt-1 flex flex-col gap-1">
+          <ul className="mt-2 flex flex-col gap-1">
             {work.map((entry) => (
               <li key={entry.id}>
                 <Line>
@@ -149,6 +142,22 @@ function Home() {
         <section>
           <Line>
             <h1 className="text-xs text-muted-foreground text-gray-500">
+              Posts
+            </h1>
+          </Line>
+          <ul className="mt-1 flex flex-col gap-1"></ul>
+        </section>
+        <section>
+          <Line>
+            <h1 className="text-xs text-muted-foreground text-gray-500">
+              Hackathons
+            </h1>
+          </Line>
+          <ul className="mt-1 flex flex-col gap-1"></ul>
+        </section>
+        {/*<section>
+          <Line>
+            <h1 className="text-xs text-muted-foreground text-gray-500">
               Archived
             </h1>
           </Line>
@@ -157,7 +166,7 @@ function Home() {
               <Line>Jan. 2026</Line>
             </li>
           </ul>
-        </section>
+        </section>*/}
       </main>
     </>
   );

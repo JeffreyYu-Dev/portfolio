@@ -12,7 +12,7 @@ import { type CSSProperties, useEffect, useRef, useState } from "react";
 // the black shell plus the two curved "ears" where it meets the top edge.
 // data-state widens it a little for a live activity, or fully when open
 const styles =
-  "fixed top-0 left-1/2 z-50 -translate-x-1/2 bg-black text-white w-48 h-10 rounded-b-xl overflow-visible transition-[width,height,border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] data-[state=activity]:w-80 data-[state=open]:w-[38rem] data-[state=open]:h-42 data-[state=open]:rounded-b-3xl before:absolute before:top-0 before:-left-3 before:size-3 before:content-[''] before:bg-[radial-gradient(circle_at_0_100%,transparent_12px,black_12.5px)] after:absolute after:top-0 after:-right-3 after:size-3 after:content-[''] after:bg-[radial-gradient(circle_at_100%_100%,transparent_12px,black_12.5px)]";
+  "fixed top-0 left-1/2 z-50 -translate-x-1/2 bg-black text-white w-3xs h-9 rounded-b-xl overflow-visible transition-[width,height,border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] data-[state=activity]:w-80 data-[state=open]:w-[38rem] data-[state=open]:h-42 data-[state=open]:rounded-b-3xl before:absolute before:top-0 before:-left-3 before:size-3 before:content-[''] before:bg-[radial-gradient(circle_at_0_100%,transparent_12px,black_12.5px)] after:absolute after:top-0 after:-right-3 after:size-3 after:content-[''] after:bg-[radial-gradient(circle_at_100%_100%,transparent_12px,black_12.5px)]";
 
 // open spot matches the open panel's p-5. timing lives in .notch-cover
 const coverStyles = "notch-cover absolute block";
@@ -34,14 +34,23 @@ export function Notch() {
   // the cover peeks from the closed pill while music plays, and is the big art when open
   const coverVisible = open || (state === "closed" && !!track?.playing);
 
+  // a press anywhere else lets go of a tapped or pinned notch. buttons that toggle
+  // it are left alone, or the press would close it and their click reopen it
   useEffect(() => {
-    if (!tapped) return;
+    if (!tapped && !pinned) return;
     const close = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setTapped(false);
+      const target = e.target as Element;
+      if (
+        ref.current?.contains(target) ||
+        target.closest("[data-notch-toggle]")
+      )
+        return;
+      setTapped(false);
+      closeNotch();
     };
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
-  }, [tapped]);
+  }, [tapped, pinned]);
 
   // escape lets go of a pinned notch
   useEffect(() => {
@@ -54,6 +63,8 @@ export function Notch() {
   return (
     <div
       ref={ref}
+      // the boot screen collapses onto this
+      data-notch
       className={styles}
       style={{ "--accent": accent } as CSSProperties}
       data-state={state}
@@ -76,7 +87,9 @@ export function Notch() {
         {activity && (
           <>
             <span className="flex shrink-0">
-              {activity.icon ?? <span className="size-2 animate-pulse rounded-full bg-white" />}
+              {activity.icon ?? (
+                <span className="size-2 animate-pulse rounded-full bg-white" />
+              )}
             </span>
             <span className="flex min-w-0 items-baseline gap-1.5 text-xs">
               <span className="text-white/40">Opening</span>
