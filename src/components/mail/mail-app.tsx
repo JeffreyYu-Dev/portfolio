@@ -1,5 +1,4 @@
 import { AppWindow } from "#/components/app-window";
-import { Avatar } from "#/components/mail/avatar";
 import { Compose } from "#/components/mail/compose";
 import { inbox } from "#/data/mail";
 import { type Piece, paragraphs } from "#/lib/mail-body";
@@ -26,11 +25,6 @@ type Row = {
 };
 
 const ids = inbox.map((email) => email.id);
-const titles: Record<Box, string> = {
-  inbox: "Inbox",
-  sent: "Sent",
-  drafts: "Drafts",
-};
 
 export function MailApp() {
   return (
@@ -86,11 +80,14 @@ function Mail() {
   }
 
   return (
-    <div className="relative flex h-full text-sm text-neutral-900">
+    <div className="flex h-full text-xs">
       <nav
         aria-label="Mailboxes"
-        className="flex w-48 shrink-0 flex-col gap-0.5 px-3 pt-14"
+        className="w-44 shrink-0 border-r border-black/10 bg-neutral-100/80 px-2 pt-12"
       >
+        <p className="px-2 pb-1 text-[10px] font-semibold text-neutral-400">
+          Favourites
+        </p>
         <BoxButton
           icon={<Inbox />}
           label="Inbox"
@@ -113,101 +110,93 @@ function Mail() {
         />
       </nav>
 
-      <section
-        aria-label="Messages"
-        className="flex w-80 shrink-0 flex-col py-3"
-      >
-        <header className="flex items-center justify-between px-3 pt-1 pb-3">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">
-              {titles[box]}
-            </h2>
-            <p className="text-xs text-neutral-500">
-              {rows.length} {rows.length === 1 ? "message" : "messages"}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => compose()}
-            className="flex items-center gap-1.5 rounded-full bg-neutral-900 px-3.5 py-2 text-xs font-medium text-white shadow-sm hover:bg-neutral-700"
+      {composing ? (
+        <div className="min-w-0 flex-1">
+          <Compose
+            initial={composing}
+            onCancel={() => setComposing(null)}
+            onSent={(sent) => {
+              setComposing(null);
+              setBox("sent");
+              setSelected(sent.id);
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          <section
+            aria-label="Messages"
+            className="flex w-64 shrink-0 flex-col border-r border-black/10"
           >
-            <SquarePen className="size-3.5" />
-            New email
-          </button>
-        </header>
-        <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-2">
-          {rows.length === 0 && (
-            <li className="p-8 text-center text-neutral-400">No messages</li>
-          )}
-          {rows.map((row) => (
-            <li key={row.id}>
+            <header className="flex h-12 shrink-0 items-center justify-between border-b border-black/10 px-3">
+              <div>
+                <h2 className="font-semibold text-neutral-900 capitalize">
+                  {box}
+                </h2>
+                <p className="text-[10px] text-neutral-400">
+                  {rows.length} {rows.length === 1 ? "message" : "messages"}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => select(row)}
-                aria-current={row.id === selected}
-                className="flex w-full gap-3 rounded-xl p-3 text-left hover:bg-white/50 aria-[current=true]:bg-white aria-[current=true]:shadow-sm"
+                aria-label="New message"
+                onClick={() => compose()}
+                className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
               >
-                <Avatar name="Jeffrey Yu" me />
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-baseline justify-between gap-2">
-                    <span className="truncate text-xs text-neutral-500">
-                      {row.unread && (
-                        <>
-                          <span
-                            aria-hidden="true"
-                            className="mr-1.5 inline-block size-1.5 -translate-y-px rounded-full bg-violet-500 align-middle"
-                          />
-                          <span className="sr-only">Unread: </span>
-                        </>
-                      )}
-                      {row.from}
-                    </span>
-                    <span className="shrink-0 text-xs text-neutral-400">
-                      {mailDate(row.date)}
-                    </span>
-                  </span>
-                  <span className="block truncate font-semibold">
-                    {row.subject}
-                  </span>
-                  <span className="line-clamp-2 text-xs text-neutral-500">
-                    {row.body}
-                  </span>
-                </span>
+                <SquarePen className="size-4" />
               </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+            </header>
+            <ul className="min-h-0 flex-1 overflow-y-auto">
+              {rows.length === 0 && (
+                <li className="p-6 text-center text-neutral-400">
+                  No Messages
+                </li>
+              )}
+              {rows.map((row) => (
+                <li key={row.id}>
+                  <button
+                    type="button"
+                    onClick={() => select(row)}
+                    aria-current={row.id === selected}
+                    className="relative block w-full border-b border-black/5 py-2 pr-3 pl-6 text-left aria-[current=true]:bg-sky-500 aria-[current=true]:text-white"
+                  >
+                    {row.unread && (
+                      <>
+                        <span
+                          aria-hidden="true"
+                          className="absolute top-3 left-2 size-2 rounded-full bg-sky-500"
+                        />
+                        <span className="sr-only">Unread: </span>
+                      </>
+                    )}
+                    <span className="flex justify-between gap-2">
+                      <span className="truncate font-semibold">{row.from}</span>
+                      <span className="shrink-0 opacity-60">
+                        {mailDate(row.date)}
+                      </span>
+                    </span>
+                    <span className="block truncate">{row.subject}</span>
+                    <span className="line-clamp-2 opacity-60">{row.body}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-      <article className="m-2 ml-0 min-w-0 flex-1 overflow-y-auto rounded-xl bg-white/90 shadow-sm ring-1 ring-black/5">
-        {current ? (
-          <Message
-            row={current}
-            box={box}
-            onReply={() => compose(`Re: ${current.subject}`)}
-          />
-        ) : (
-          <p className="grid h-full place-items-center text-neutral-400">
-            No message selected
-          </p>
-        )}
-      </article>
-
-      {composing && (
-        // the inbox stays in view behind, dimmed, with the card floating on it
-        <div className="absolute inset-0 z-20 grid place-items-center bg-neutral-900/10 p-8 backdrop-blur-sm">
-          <div className="h-full max-h-[500px] w-full max-w-xl">
-            <Compose
-              initial={composing}
-              onCancel={() => setComposing(null)}
-              onSent={(sent) => {
-                setComposing(null);
-                setBox("sent");
-                setSelected(sent.id);
-              }}
-            />
-          </div>
-        </div>
+          <article className="min-w-0 flex-1 overflow-y-auto">
+            {current ? (
+              <Message
+                row={current}
+                box={box}
+                onReply={() => compose(`Re: ${current.subject}`)}
+              />
+            ) : (
+              <p className="grid h-full place-items-center text-neutral-400">
+                No Message Selected
+              </p>
+            )}
+          </article>
+        </>
       )}
     </div>
   );
@@ -223,38 +212,38 @@ function Message({
   onReply: () => void;
 }) {
   return (
-    <div className="px-8 py-7">
-      <h3 className="text-2xl font-semibold tracking-tight">{row.subject}</h3>
-      <div className="mt-4 flex items-center justify-between gap-4">
-        <span className="flex items-center gap-2">
-          <Avatar name="Jeffrey Yu" me />
-          <span className="text-xs">
-            <span className="block font-medium">
-              {box === "inbox" ? row.from : "You"}
-            </span>
-            <span className="text-neutral-500">
-              {box === "inbox" ? "to you" : "to Jeffrey Yu"} ·{" "}
-              {new Date(row.date).toLocaleString()}
-            </span>
-          </span>
-        </span>
+    <>
+      <header className="flex items-start justify-between gap-4 border-b border-black/10 px-5 py-4">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-neutral-900">
+            {row.subject}
+          </h3>
+          <p className="text-neutral-500">
+            {box === "inbox"
+              ? `From: ${row.from} · To: you`
+              : "From: you · To: Jeffrey Yu"}
+          </p>
+          <p className="text-neutral-400">
+            {new Date(row.date).toLocaleString()}
+          </p>
+        </div>
         {box === "inbox" && (
           <button
             type="button"
             onClick={onReply}
-            className="flex shrink-0 items-center gap-1.5 rounded-full bg-black/5 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-black/10"
+            className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-neutral-600 hover:bg-neutral-100"
           >
-            <Reply className="size-3.5" /> Reply
+            <Reply className="size-4" /> Reply
           </button>
         )}
-      </div>
-      <div className="mt-6 flex flex-col gap-4 leading-relaxed whitespace-pre-line text-neutral-800">
+      </header>
+      <div className="flex flex-col gap-3 px-5 py-4 leading-relaxed whitespace-pre-line text-neutral-800">
         {paragraphs(row.body).map((pieces, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: paragraphs never reorder
           <Paragraph key={i} pieces={pieces} />
         ))}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -276,7 +265,7 @@ function Text({ piece }: { piece: Piece }) {
       href={piece.href}
       target="_blank"
       rel="noreferrer"
-      className="text-violet-600 underline underline-offset-2"
+      className="text-sky-600 underline"
     >
       {piece.href}
     </a>
@@ -301,11 +290,11 @@ function BoxButton({
       type="button"
       onClick={onClick}
       aria-current={active}
-      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-neutral-600 hover:bg-white/50 aria-[current=true]:bg-white aria-[current=true]:text-neutral-900 aria-[current=true]:shadow-sm [&>svg]:size-4"
+      className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-neutral-700 aria-[current=true]:bg-black/10 [&>svg]:size-3.5 [&>svg]:text-sky-500"
     >
       {icon}
       <span className="flex-1 text-left">{label}</span>
-      {count > 0 && <span className="text-xs text-neutral-400">{count}</span>}
+      {count > 0 && <span className="text-neutral-400">{count}</span>}
     </button>
   );
 }

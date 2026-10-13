@@ -37,7 +37,7 @@ function Contact() {
         ) : ready ? (
           // the page column is wider than a phone, so the card caps itself at the
           // screen width to keep send in reach
-          <div className="h-[32rem] w-[min(100%,calc(100vw-2rem))]">
+          <div className="h-[28rem] w-[min(100%,calc(100vw-2rem))] overflow-hidden rounded-lg ring-1 ring-black/10">
             <Compose
               initial={mail.draft ?? newDraft()}
               onSent={(_, replyTo) => setSentTo(replyTo)}

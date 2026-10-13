@@ -40,10 +40,9 @@ export function AppWindow({
         onKeyDown={(e) => {
           if (e.key === "Escape") closeWindow(id);
         }}
-        className="pointer-events-auto relative h-full max-h-[600px] w-full max-w-[960px] overflow-hidden rounded-2xl border border-white/60 bg-white/70 shadow-2xl ring-1 ring-black/10 backdrop-blur-2xl backdrop-saturate-150 outline-none"
+        className="pointer-events-auto relative h-full max-h-[560px] w-full max-w-[900px] overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/15 outline-none"
       >
-        {/* above anything the app layers on top, so the window can always close */}
-        <div className="absolute top-4 left-4 z-30 flex gap-2">
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
           <button
             type="button"
             aria-label={`Close ${title}`}
