@@ -140,8 +140,9 @@ Fields:
 - A honeypot input named `website`, positioned off-screen with `aria-hidden`,
   `tabIndex={-1}` and `autoComplete="off"`.
 
-Compose records `openedAt = Date.now()` when it opens and sends it with the
-form. Clicking a draft in Drafts reopens compose with the draft filled in.
+Compose sends `filledMs`, the time since the draft was started, measured on
+the visitor's own clock (so a clock that's set wrong can't skew it against the
+server's). Clicking a draft in Drafts reopens compose with the draft filled in.
 
 `compose.tsx` takes `onSent` and `onCancel` props so `/contact` can render the
 same form without the Mail chrome.
@@ -207,7 +208,7 @@ export const mailSchema = z.object({
 
 export const sendSchema = mailSchema.extend({
   website: z.string().optional(),  // honeypot
-  openedAt: z.number(),
+  filledMs: z.number(),
 });
 ```
 
@@ -223,7 +224,7 @@ against the installed `@tanstack/react-start`.
 type SendResult = { ok: true } | { ok: false; message: string };
 ```
 
-1. **Spam checks.** If `website` is non-empty, or `Date.now() - openedAt` is
+1. **Spam checks.** If `website` is non-empty, or `filledMs` is
    under 3000ms, return `{ ok: true }` without sending. Bots get no signal that
    they were caught.
 2. **Config.** Read `RESEND_API_KEY`, `MAIL_TO` (default

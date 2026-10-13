@@ -18,10 +18,10 @@ export const MIN_FILL_MS = 3000;
 
 export async function handleSend(
   input: SendInput,
-  deps: { send: Sender | null; now: () => number; to: string; from: string },
+  deps: { send: Sender | null; to: string; from: string },
 ): Promise<SendResult> {
   // a caught bot gets the same answer as a person, so it learns nothing
-  if (input.website || deps.now() - input.openedAt < MIN_FILL_MS) {
+  if (input.website || input.filledMs < MIN_FILL_MS) {
     return { ok: true };
   }
   if (!deps.send) {

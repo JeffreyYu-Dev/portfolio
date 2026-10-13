@@ -12,7 +12,6 @@ export const sendMail = createServerFn({ method: "POST" })
     const key = process.env.RESEND_API_KEY;
     return handleSend(data, {
       send: key ? resendSender(key) : null,
-      now: Date.now,
       to: process.env.MAIL_TO || socials.email,
       // resend's shared sender only delivers to the account owner, which is me
       from: process.env.MAIL_FROM || "Portfolio <onboarding@resend.dev>",

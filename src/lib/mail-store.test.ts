@@ -151,6 +151,21 @@ describe("store", () => {
     expect(store.getMail().read).toEqual(["welcome", "play"]);
   });
 
+  it("keeps working when the browser blocks storage entirely", async () => {
+    // blocked site data makes even reading the localStorage property throw
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() {
+        throw new DOMException("denied", "SecurityError");
+      },
+    });
+    const store = await import("#/lib/mail-store");
+    expect(store.getMail()).toEqual(store.emptyMail);
+    store.markRead("a");
+    expect(store.getMail().read).toEqual(["a"]);
+    delete (globalThis as { localStorage?: unknown }).localStorage;
+  });
+
   it("keeps working when storage throws", async () => {
     vi.stubGlobal("localStorage", {
       getItem: () => {

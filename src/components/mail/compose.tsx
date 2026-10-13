@@ -70,7 +70,7 @@ export function Compose({
         data: {
           ...fields,
           website: honeypot.current?.value ?? "",
-          openedAt: initial.startedAt,
+          filledMs: Date.now() - initial.startedAt,
         },
       });
       if (!result.ok) {

@@ -77,10 +77,10 @@ describe("checkMail", () => {
 
 describe("sendSchema", () => {
   it("adds the honeypot and opened time", () => {
-    const parsed = sendSchema.parse({ ...valid, website: "", openedAt: 1 });
-    expect(parsed).toEqual({ ...valid, website: "", openedAt: 1 });
+    const parsed = sendSchema.parse({ ...valid, website: "", filledMs: 1 });
+    expect(parsed).toEqual({ ...valid, website: "", filledMs: 1 });
   });
-  it("requires openedAt", () => {
+  it("requires filledMs", () => {
     expect(sendSchema.safeParse(valid).success).toBe(false);
   });
 });

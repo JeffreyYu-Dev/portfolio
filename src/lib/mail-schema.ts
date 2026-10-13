@@ -31,10 +31,12 @@ export const mailSchema = z.object({
     .max(5000, "Keep it under 5000 characters"),
 });
 
-// what the server function receives: the form plus the two spam signals
+// what the server function receives: the form plus the two spam signals.
+// filledMs is measured on the visitor's own clock, a clock that's set wrong
+// would throw off a timestamp compared against the server's
 export const sendSchema = mailSchema.extend({
   website: z.string().optional(),
-  openedAt: z.number(),
+  filledMs: z.number(),
 });
 
 export type MailFields = z.input<typeof mailSchema>;

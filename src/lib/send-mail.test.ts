@@ -2,18 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 import type { SendInput } from "#/lib/mail-schema";
 import { handleSend, SEND_FAILED, type Sender } from "#/lib/send-mail";
 
-const NOW = 1_000_000;
 const input: SendInput = {
   name: "Ada",
   email: "ada@example.com",
   subject: "hi",
   body: "hello there",
   website: "",
-  openedAt: NOW - 10_000,
+  filledMs: 10_000,
 };
 
 function deps(send: Sender | null = vi.fn(async () => {})) {
-  return { send, now: () => NOW, to: "me@x.com", from: "Portfolio <p@x.com>" };
+  return { send, to: "me@x.com", from: "Portfolio <p@x.com>" };
 }
 
 describe("handleSend", () => {
@@ -36,18 +35,18 @@ describe("handleSend", () => {
   });
   it("pretends to send when it was filled in under 3 seconds", async () => {
     const d = deps();
-    const result = await handleSend({ ...input, openedAt: NOW - 2999 }, d);
+    const result = await handleSend({ ...input, filledMs: 2999 }, d);
     expect(result).toEqual({ ok: true });
     expect(d.send).not.toHaveBeenCalled();
   });
   it("sends a draft started long ago even if sent right after reopening", async () => {
     const d = deps();
-    await handleSend({ ...input, openedAt: NOW - 86_400_000 }, d);
+    await handleSend({ ...input, filledMs: 86_400_000 }, d);
     expect(d.send).toHaveBeenCalledOnce();
   });
   it("sends at exactly 3 seconds", async () => {
     const d = deps();
-    await handleSend({ ...input, openedAt: NOW - 3000 }, d);
+    await handleSend({ ...input, filledMs: 3000 }, d);
     expect(d.send).toHaveBeenCalledOnce();
   });
   it("fails with the generic message when the sender rejects", async () => {

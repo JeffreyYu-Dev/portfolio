@@ -105,12 +105,15 @@ const listeners = new Set<() => void>();
 // read lazily on first use, after hydration, so the server render and the
 // first client render agree (everything unread, nothing sent)
 function load() {
-  if (loaded || typeof localStorage === "undefined") return;
-  loaded = true;
+  if (loaded) return;
   try {
+    // inside the try: with site data blocked, even reading localStorage throws
+    if (typeof localStorage === "undefined") return;
+    loaded = true;
     state = parseStored(localStorage.getItem(STORAGE_KEY));
   } catch {
     // storage blocked (private mode, permissions). mail still works for the visit
+    loaded = true;
   }
 }
 
