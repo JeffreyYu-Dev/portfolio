@@ -1,8 +1,15 @@
 import { Window } from "#/components/window";
+import { Line } from "#/components/line";
+import { Socials } from "#/components/socials";
+import {
+  Availability,
+  Listening,
+  LocalTime,
+} from "#/components/status-line";
 import { WorkLogo } from "#/components/work-logo";
 import { type Project, projects } from "#/data/projects";
 import { type Work, work } from "#/data/work";
-import { vt } from "#/lib/view-transition";
+import { morph, useLeave, usePageEnter } from "#/lib/page-transition";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({ component: Home });
@@ -17,90 +24,138 @@ function Footer() {
   // capcha
 }
 
-// vt() pairs the row, logo and title with their twins on the work page
+// morph() pairs the logo and title with their twins on the work page
 function WorkRow({ entry }: { entry: Work }) {
+  const key = `work-${entry.id}`;
+  const onClick = useLeave(key, {
+    title: entry.company,
+    icon: <WorkLogo entry={entry} size="sm" />,
+  });
+
   return (
-    <Link to="/work/$id" params={{ id: entry.id }}>
+    <Link to="/work/$id" params={{ id: entry.id }} onClick={onClick}>
       <div
         className="flex justify-between text-sm hover:underline hover:bg-stone-200/30 rounded"
-        style={vt("work", entry.id)}
       >
         <span className="flex items-center gap-2 ">
-          <WorkLogo
-            entry={entry}
-            size="sm"
-            style={vt("work", entry.id, "icon")}
-          />
-          <span style={vt("work", entry.id, "title")}>{entry.company}</span>
+          <span className="flex shrink-0" {...morph(key, "icon")}>
+            <WorkLogo entry={entry} size="sm" />
+          </span>
+          <span {...morph(key, "title")}>{entry.company}</span>
         </span>
 
-        <span className="text-gray-500">{entry.years}</span>
+        <span className="text-gray-500">
+          <Line inline>{entry.years}</Line>
+        </span>
       </div>
     </Link>
   );
 }
 
 function ProjectRow({ entry }: { entry: Project }) {
+  const key = `project-${entry.id}`;
+  const onClick = useLeave(key, { title: entry.name });
+
   return (
-    <Link to="/projects/$id" params={{ id: entry.id }}>
+    <Link to="/projects/$id" params={{ id: entry.id }} onClick={onClick}>
       <div
         className="flex justify-between text-sm hover:underline hover:bg-stone-200/30 rounded"
-        style={vt("project", entry.id)}
       >
-        <span style={vt("project", entry.id, "title")}>{entry.name}</span>
-        <span className="text-gray-500">{entry.year}</span>
+        <span {...morph(key, "title")}>{entry.name}</span>
+        <span className="text-gray-500">
+          <Line inline>{entry.year}</Line>
+        </span>
       </div>
     </Link>
   );
 }
 
 function Home() {
+  usePageEnter();
+
   return (
     <>
       <header>
         {/* make this cooler */}
-        <h1 className="text-lg">Jeffrey Yu</h1>
+        <Line>
+          <h1 className="text-lg">Jeffrey Yu</h1>
+        </Line>
 
         {/*stuff about me*/}
-        <p className="text-xs">
-          Student at{" "}
-          <Window
-            href="https://www.uwo.ca/index.html"
-            className="underline underline-offset-1"
-          >
-            Western
-          </Window>
-        </p>
+        <Line>
+          <p className="text-xs">
+            Student at{" "}
+            <Window
+              href="https://www.uwo.ca/index.html"
+              className="underline underline-offset-1"
+            >
+              Western
+            </Window>
+          </p>
+        </Line>
+        <div className="mt-1 flex flex-col gap-0.5">
+          {/* raised so its hover card covers the lines below, each line is its own layer */}
+          <div className="relative z-20">
+            <Line>
+              <Availability />
+            </Line>
+          </div>
+          <Line>
+            <LocalTime />
+          </Line>
+          <Line>
+            <Listening />
+          </Line>
+        </div>
+        <Line>
+          <div className="mt-2">
+            <Socials />
+          </div>
+        </Line>
       </header>
       <main className="mt-4 flex flex-col gap-6">
         <section>
-          <h1 className="text-xs text-muted-foreground text-gray-500">Work</h1>
+          <Line>
+            <h1 className="text-xs text-muted-foreground text-gray-500">
+              Work
+            </h1>
+          </Line>
           <ul className="mt-1 flex flex-col gap-1">
             {work.map((entry) => (
               <li key={entry.id}>
-                <WorkRow entry={entry} />
+                <Line>
+                  <WorkRow entry={entry} />
+                </Line>
               </li>
             ))}
           </ul>
         </section>
         <section>
-          <h1 className="text-xs text-muted-foreground text-gray-500">
-            Projects
-          </h1>
+          <Line>
+            <h1 className="text-xs text-muted-foreground text-gray-500">
+              Projects
+            </h1>
+          </Line>
           <ul className="mt-1 flex flex-col gap-1">
             {projects.map((entry) => (
               <li key={entry.id}>
-                <ProjectRow entry={entry} />
+                <Line>
+                  <ProjectRow entry={entry} />
+                </Line>
               </li>
             ))}
           </ul>
         </section>
         <section>
-          <h1 className="text-xs text-muted-foreground text-gray-500">
-            Archived
-          </h1>
+          <Line>
+            <h1 className="text-xs text-muted-foreground text-gray-500">
+              Archived
+            </h1>
+          </Line>
           <ul className="mt-1 flex flex-col gap-1">
-            <li>Jan. 2026</li>
+            <li>
+              <Line>Jan. 2026</Line>
+            </li>
           </ul>
         </section>
       </main>

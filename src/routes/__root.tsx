@@ -39,7 +39,8 @@ function RootLayout() {
   return (
     <>
       <Notch />
-      <div className="mx-auto w-md mt-20">
+      {/* data-page: what page-transition.ts snapshots when leaving */}
+      <div data-page className="mx-auto w-md mt-20">
         <Outlet />
       </div>
     </>

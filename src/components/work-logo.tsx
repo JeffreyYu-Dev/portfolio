@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import type { Work } from "#/data/work";
 
 const sizes = {
@@ -10,11 +9,9 @@ const sizes = {
 export function WorkLogo({
   entry,
   size,
-  style,
 }: {
   entry: Work;
   size: keyof typeof sizes;
-  style?: CSSProperties;
 }) {
   if (entry.logo) {
     return (
@@ -22,7 +19,6 @@ export function WorkLogo({
         src={entry.logo}
         alt={`${entry.company} logo`}
         className={`object-contain ${sizes[size]}`}
-        style={style}
       />
     );
   }
@@ -31,7 +27,6 @@ export function WorkLogo({
     <span
       aria-hidden
       className={`grid shrink-0 place-items-center bg-gray-900 font-medium text-white ${sizes[size]}`}
-      style={style}
     >
       {entry.company[0].toLowerCase()}
     </span>

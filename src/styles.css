@@ -1,127 +1,50 @@
 @import "tailwindcss";
 
-/* page transitions, see docs/superpowers/specs/2026-10-11-page-transition-design.md */
+/* page transitions, see src/lib/page-transition.ts */
 
-:root {
-  --ease-notch: cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-::view-transition-group(*) {
-  animation-duration: 120ms;
-  animation-timing-function: var(--ease-notch);
-}
-
-/* row → page morph */
-::view-transition-group(.item-box),
-::view-transition-group(.item-icon),
-::view-transition-group(.item-title) {
-  animation-duration: 300ms;
-}
-
-/* clip so the page reveals downward as the row grows */
-::view-transition-group(.item-box) {
-  overflow: clip;
-}
-
-::view-transition-old(.item-box) {
-  animation: 100ms var(--ease-notch) both vt-fade-out;
-}
-
-::view-transition-new(.item-box) {
-  animation: 200ms var(--ease-notch) both vt-fade-in;
-}
-
-/* scale text by height so "Lyft" grows into the title instead of stretching */
-::view-transition-old(.item-title),
-::view-transition-new(.item-title) {
-  block-size: 100%;
-  inline-size: auto;
-}
-
-/* the two labels don't share text, so swap them quickly instead of ghosting */
-::view-transition-old(.item-title) {
-  animation: 90ms var(--ease-notch) both vt-fade-out;
-}
-
-::view-transition-new(.item-title) {
-  animation: 150ms var(--ease-notch) both vt-fade-in;
-}
-
-/* rows that weren't clicked have no twin on the other page, so they fade with it */
-::view-transition-old(.item-box):only-child,
-::view-transition-old(.item-icon):only-child,
-::view-transition-old(.item-title):only-child {
-  animation: 60ms var(--ease-notch) both vt-fade-out;
-}
-
-::view-transition-new(.item-box):only-child,
-::view-transition-new(.item-icon):only-child,
-::view-transition-new(.item-title):only-child {
-  /* wait for the clicked row to land so it doesn't pass through the others */
-  animation: 150ms var(--ease-notch) 150ms both vt-fade-in;
-}
-
-html:active-view-transition-type(forward)::view-transition-old(root) {
-  animation: 60ms var(--ease-notch) both vt-blur-out;
-}
-
-html:active-view-transition-type(forward)::view-transition-new(root) {
-  animation: 150ms var(--ease-notch) both vt-fade-in;
-}
-
-html:active-view-transition-type(back)::view-transition-group(.item-box),
-html:active-view-transition-type(back)::view-transition-group(.item-icon),
-html:active-view-transition-type(back)::view-transition-group(.item-title) {
-  animation-duration: 280ms;
-}
-
-@keyframes vt-fade-in {
-  from {
-    opacity: 0;
+/* start hidden so the first paint doesn't flash before gsap reveals the lines */
+@media (scripting: enabled) {
+  .line-in {
+    transform: translateY(110%);
   }
 }
 
-@keyframes vt-fade-out {
-  to {
-    opacity: 0;
-  }
+/* equalizer bars in the closed notch, see src/components/notch.tsx */
+@keyframes notch-bar {
+  0%, 100% { height: 30%; }
+  50% { height: 100%; }
 }
 
-@keyframes vt-blur-out {
-  to {
-    opacity: 0;
-    filter: blur(4px);
-  }
+.notch-bar {
+  height: 30%;
+  animation: notch-bar 0.9s ease-in-out infinite;
 }
 
-/* body text settling in while the morph finishes */
-@keyframes blur-in {
-  from {
-    opacity: 0;
-    filter: blur(4px);
-    translate: 0 4px;
-  }
-}
-
-.blur-in {
-  animation: blur-in 120ms var(--ease-notch) both;
-  animation-delay: calc(150ms + var(--i, 0) * 25ms);
+/* the album cover growing between the closed pill and the open player, on the shell's easing */
+.notch-cover {
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  transition:
+    top 0.5s var(--ease),
+    left 0.5s var(--ease),
+    width 0.5s var(--ease),
+    height 0.5s var(--ease),
+    border-radius 0.5s var(--ease),
+    opacity 0.15s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*) {
-    animation: none !important;
+  .notch-cover {
+    transition: none;
   }
+}
 
-  ::view-transition-old(*) {
-    animation: 100ms ease both vt-fade-out !important;
-  }
+/* the clock's colon in the home page status line, blinking like a desk clock */
+@keyframes status-colon {
+  50% { opacity: 0.2; }
+}
 
-  ::view-transition-new(*) {
-    animation: 100ms ease both vt-fade-in !important;
-  }
-
-  .blur-in {
-    animation: none;
+@media (prefers-reduced-motion: no-preference) {
+  .status-colon {
+    animation: status-colon 1s steps(1) infinite;
   }
 }
