@@ -1,24 +1,25 @@
 import { GitHub, Spotify } from "#/components/brand-icons";
 import { useNowPlaying } from "#/components/notch-player";
+import { inbox } from "#/data/mail";
 import { socials } from "#/data/socials";
+import { unreadCount, useMail } from "#/lib/mail-store";
 import { toggleNotch } from "#/lib/notch-store";
 import { useGo } from "#/lib/page-transition";
+import { openWindow, useWindow } from "#/lib/window-store";
 import { Link, useLocation } from "@tanstack/react-router";
 import { FileUser, House, Mail, NotebookPen, Trash2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 
 // a tiny frosted macOS dock pinned to the bottom edge. a dot marks what's "running"
 export function Dock() {
   const track = useNowPlaying();
   const { pathname } = useLocation();
-  const [copied, setCopied] = useState(false);
   const go = useGo("dock");
-
-  const copy = async () => {
-    await navigator.clipboard.writeText(socials.email);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+  const mail = useWindow("mail");
+  const unread = unreadCount(
+    useMail(),
+    inbox.map((email) => email.id),
+  );
 
   return (
     <nav
@@ -74,11 +75,11 @@ export function Dock() {
           </a>
         </Item>
 
-        <Item label={copied ? "Copied!" : "Copy email"} badge={1}>
+        <Item label="Mail" running={mail.open} badge={unread}>
           <button
             type="button"
-            onClick={copy}
-            aria-label="Copy email"
+            onClick={() => openWindow("mail")}
+            aria-label="Mail"
             className={tile("from-sky-400 to-indigo-600")}
           >
             <Mail />
