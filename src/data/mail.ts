@@ -32,3 +32,39 @@ export const inbox: Email[] = [
     body: "i've played games my whole life and i'm always down for more.\n\ndiscord: (handle coming soon)\n\nreply with what you play and your tag.",
   },
 ];
+
+// starter messages behind compose's "use template" button. the blanks are for
+// the visitor to fill in
+export type Template = {
+  id: string;
+  label: string;
+  subject: string;
+  body: string;
+};
+
+export const templates: Template[] = [
+  {
+    id: "play",
+    label: "Let's play something",
+    subject: "let's play something",
+    body: "hey jeffrey,\n\ni play ___ and my tag is ___. want to run a few games?\n\n",
+  },
+  {
+    id: "job",
+    label: "Job opportunity",
+    subject: "opportunity at ___",
+    body: "hi jeffrey,\n\ni'm ___ from ___. we're hiring for ___ and your work caught my eye. would you be up for a chat?\n\n",
+  },
+  {
+    id: "watch",
+    label: "You should watch…",
+    subject: "you should watch ___",
+    body: "hey,\n\nyou have to watch ___. it's ___ and i think you'd like it because ___.\n\n",
+  },
+  {
+    id: "hi",
+    label: "Just saying hi",
+    subject: "hi!",
+    body: "hey jeffrey,\n\njust stopping by to say hi. cool site.\n\n",
+  },
+];

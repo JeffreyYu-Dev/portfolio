@@ -110,42 +110,56 @@ Dock changes (`dock.tsx`):
 
 ## Mail layout
 
-Apple Mail's three columns inside `AppWindow`:
+Revised 2026-10-13 after the first build: the original Apple Mail look was
+replaced with an airy frosted-glass design based on a reference compose card
+Jeffrey shared. Ask AI, Cc/Bcc, rich-text formatting, attachments and
+scheduling from that reference are deliberately left out.
 
-- **Sidebar** (translucent, about 170px): Inbox with an unread count, Sent,
-  and Drafts (shows 1 when a draft exists).
-- **Message list** (about 260px): for each email, the sender, date label,
-  subject and a one-line preview. Unread emails get a blue dot. Empty
-  mailboxes show "No Messages", as Mail does.
-- **Reading pane**: the selected email's header (from, to, date, subject) and
-  body. Seeded emails have a **Reply** button that opens compose with
-  `Re: <subject>` filled in. With nothing selected, it shows "No Message
-  Selected".
-- **Toolbar** (in the `AppWindow` slot): the mailbox name with its message
-  count, and a compose button (lucide `SquarePen`).
+The `AppWindow` frame is frosted glass (`bg-white/70`, strong backdrop blur, a
+white inner border, a large radius). Mail keeps three columns inside it:
+
+- **Sidebar**: Inbox (with an unread count), Sent and Drafts (1 when a draft
+  exists) as pill rows. The active row is a white raised pill. No hard dividers.
+- **Message list**: the mailbox name in large type with its message count, and
+  a black pill **New email** button. Rows are borderless and spaced out:
+  initials avatar, sender, date label, bold subject, two-line grey preview. The
+  selected row is a white raised card, and unread is a small violet dot. An
+  empty mailbox shows "No messages".
+- **Reading pane**: an inset white card with the subject as a large heading, an
+  avatar line ("Jeffrey Yu · to you · date"), the body, and a **Reply** pill on
+  seeded emails that opens compose with `Re: <subject>`.
 
 Selecting an Inbox email marks it read. On open, Inbox is selected and nothing
-is selected in the list.
+is selected in the list. Avatars are initials circles. Jeffrey's shows
+`public/avatar.jpg` over the initials once that file exists.
 
 ### Compose
 
-Compose is a sheet covering the reading pane and list (not a second window),
-with its own toolbar: Cancel on the left and Send (lucide `Send`) on the right.
+Compose is a floating card centred over the Mail window, which dims and blurs
+behind it. The traffic lights stay above it, so the window can always close.
 
-Fields:
-- **To:** "Jeffrey Yu", read-only.
-- **From:** two inputs, name and email.
-- **Subject**
-- **Message:** a textarea.
-- A honeypot input named `website`, positioned off-screen with `aria-hidden`,
-  `tabIndex={-1}` and `autoComplete="off"`.
+- **Header**: "New email" and a ✕ that closes the card and keeps the draft.
+- **To**: a chip with Jeffrey's avatar and name, read-only.
+- **From**: borderless "Your name" and "you@email.com" inputs. Once focus
+  leaves them with a valid name and email, they fold into a chip showing the
+  visitor's initials and email. Clicking the chip unfolds them, focusing the
+  name. A name or email error on Send unfolds them.
+- **Subject**: a borderless input styled as a large heading.
+- **Body**: a borderless textarea that fills the card.
+- A honeypot input named `website`, off-screen, `aria-hidden`,
+  `tabIndex={-1}`, `autoComplete="off"`.
+- **Bottom bar**: a template button with a dark "Use template" tooltip on the
+  left, and a black **Send** button on the right ("Sending…" while sending).
 
-Compose sends `filledMs`, the time since the draft was started, measured on
-the visitor's own clock (so a clock that's set wrong can't skew it against the
-server's). Clicking a draft in Drafts reopens compose with the draft filled in.
+**Templates** (`templates` in `src/data/mail.ts`): Let's play something, Job
+opportunity, You should watch…, Just saying hi. Picking one fills the subject
+and body and keeps the From fields. If the body already has text, the menu asks
+"Replace your message?" (Keep / Replace) first. Esc closes the menu, not the
+window.
 
-`compose.tsx` takes `onSent` and `onCancel` props so `/contact` can render the
-same form without the Mail chrome.
+Clicking a draft in Drafts reopens compose with the draft filled in.
+`compose.tsx` takes `onSent` and `onCancel` props. `/contact` renders the same
+card without `onCancel`, so there's no ✕.
 
 ## Data
 

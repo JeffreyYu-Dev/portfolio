@@ -1,4 +1,11 @@
+import { Avatar } from "#/components/mail/avatar";
+import { type Template, templates } from "#/data/mail";
 import { socials } from "#/data/socials";
+import {
+  fromReady,
+  replacesWriting,
+  withTemplate,
+} from "#/lib/compose-fields";
 import {
   checkMail,
   type FieldErrors,
@@ -13,18 +20,18 @@ import {
 } from "#/lib/mail-store";
 import { SEND_FAILED } from "#/lib/send-mail";
 import { sendMail } from "#/server/send-mail";
-import { Send } from "lucide-react";
+import { FileText, Send, X } from "lucide-react";
 import {
+  type FocusEvent,
   type FormEvent,
-  type ReactNode,
   useEffect,
   useId,
   useRef,
   useState,
 } from "react";
 
-// a new message to me. the draft is saved as they type, so closing the window or
-// a failed send never loses what they wrote
+// a new message to me, as a floating card. the draft is saved as they type, so
+// closing it or a failed send never loses what they wrote
 export function Compose({
   initial,
   onSent,
@@ -43,24 +50,48 @@ export function Compose({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
+  // name + email fold into a chip once they look right, and unfold to edit
+  const [editingFrom, setEditingFrom] = useState(() => !fromReady(fields));
   const honeypot = useRef<HTMLInputElement>(null);
+  const nameInput = useRef<HTMLInputElement>(null);
+  const focusName = useRef(false);
   const id = useId();
 
   // closing mid-sentence still keeps the last few keystrokes
   useEffect(() => flushDraft, []);
 
-  const change = (key: keyof MailFields) => (value: string) => {
-    const next = { ...fields, [key]: value };
+  useEffect(() => {
+    if (editingFrom && focusName.current) nameInput.current?.focus();
+    focusName.current = false;
+  }, [editingFrom]);
+
+  function update(next: MailFields) {
     setFields(next);
-    setErrors((e) => ({ ...e, [key]: undefined }));
     saveDraft({ ...next, startedAt: initial.startedAt });
+  }
+
+  const change = (key: keyof MailFields) => (value: string) => {
+    update({ ...fields, [key]: value });
+    setErrors((e) => ({ ...e, [key]: undefined }));
   };
+
+  // fold once focus leaves both from inputs, not when moving between them
+  function leaveFrom(e: FocusEvent<HTMLFieldSetElement>) {
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    if (fromReady(fields)) setEditingFrom(false);
+  }
+
+  function applyTemplate(template: Template) {
+    update(withTemplate(fields, template));
+    setErrors((e) => ({ ...e, subject: undefined, body: undefined }));
+  }
 
   async function send(e: FormEvent) {
     e.preventDefault();
     const checked = checkMail(fields);
     if (!checked.ok) {
       setErrors(checked.errors);
+      if (checked.errors.name || checked.errors.email) setEditingFrom(true);
       return;
     }
     setSending(true);
@@ -96,74 +127,117 @@ export function Compose({
     <form
       onSubmit={send}
       noValidate
-      className="flex h-full flex-col bg-white text-xs"
+      className="flex h-full flex-col rounded-2xl bg-white/90 text-sm text-neutral-900 shadow-xl ring-1 ring-black/5 backdrop-blur-xl"
     >
-      <div className="flex h-12 shrink-0 items-center justify-between border-b border-black/10 px-4">
-        {onCancel ? (
+      <div className="flex items-center justify-between px-6 pt-5 pb-3">
+        <span className="font-semibold">New email</span>
+        {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="text-neutral-500 hover:text-neutral-900"
+            aria-label="Close"
+            className="rounded-md p-1 text-neutral-500 hover:bg-black/5 hover:text-neutral-900"
           >
-            Cancel
+            <X className="size-4" />
           </button>
-        ) : (
-          <span />
         )}
-        <span className="font-semibold text-neutral-800">New Message</span>
-        <button
-          type="submit"
-          disabled={sending}
-          aria-label="Send"
-          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sky-600 hover:bg-sky-50 disabled:text-neutral-400"
-        >
-          {sending ? "Sending…" : <Send className="size-4" />}
-        </button>
       </div>
 
-      {failed && (
-        <p
-          role="alert"
-          className="border-b border-black/10 bg-red-50 px-4 py-2 text-red-700"
-        >
-          {SEND_FAILED.replace(socials.email, "")}
-          <a href={`mailto:${socials.email}`} className="underline">
-            {socials.email}
-          </a>
-        </p>
-      )}
+      <fieldset
+        disabled={sending}
+        className="flex min-h-0 flex-1 flex-col px-6"
+      >
+        <div className="flex items-center gap-3 py-1.5">
+          <span className="w-10 shrink-0 text-neutral-400">To</span>
+          <span className="flex items-center gap-2 rounded-full bg-white py-1 pr-3 pl-1 shadow-sm ring-1 ring-black/5">
+            <Avatar name="Jeffrey Yu" me />
+            Jeffrey Yu
+          </span>
+        </div>
 
-      <fieldset disabled={sending} className="flex min-h-0 flex-1 flex-col">
-        <Row label="To:">
-          <span className="text-neutral-800">Jeffrey Yu</span>
-        </Row>
-        <Field id={`${id}-name`} label="Name:" error={errors.name}>
-          <input
-            id={`${id}-name`}
-            autoComplete="name"
-            value={fields.name}
-            onChange={(e) => change("name")(e.target.value)}
-            className={input}
-          />
-        </Field>
-        <Field id={`${id}-email`} label="Email:" error={errors.email}>
-          <input
-            id={`${id}-email`}
-            type="email"
-            autoComplete="email"
-            value={fields.email}
-            onChange={(e) => change("email")(e.target.value)}
-            className={input}
-          />
-        </Field>
-        <Field id={`${id}-subject`} label="Subject:" error={errors.subject}>
-          <input
-            id={`${id}-subject`}
-            value={fields.subject}
-            onChange={(e) => change("subject")(e.target.value)}
-            className={input}
-          />
-        </Field>
+        <fieldset
+          aria-label="From"
+          className="flex min-w-0 items-center gap-3 py-1.5"
+          onBlur={leaveFrom}
+        >
+          <span className="w-10 shrink-0 text-neutral-400">From</span>
+          {editingFrom ? (
+            <div className="flex min-w-0 flex-1 gap-3">
+              <label htmlFor={`${id}-name`} className="sr-only">
+                Your name
+              </label>
+              <input
+                ref={nameInput}
+                id={`${id}-name`}
+                placeholder="Your name"
+                autoComplete="name"
+                value={fields.name}
+                onChange={(e) => change("name")(e.target.value)}
+                aria-invalid={!!errors.name}
+                className={`${input} w-32`}
+              />
+              <label htmlFor={`${id}-email`} className="sr-only">
+                Your email
+              </label>
+              <input
+                id={`${id}-email`}
+                type="email"
+                placeholder="you@email.com"
+                autoComplete="email"
+                value={fields.email}
+                onChange={(e) => change("email")(e.target.value)}
+                aria-invalid={!!errors.email}
+                className={`${input} min-w-0 flex-1`}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                focusName.current = true;
+                setEditingFrom(true);
+              }}
+              aria-label={`From ${fields.name}, ${fields.email.trim()}. Edit`}
+              className="flex min-w-0 items-center gap-2 rounded-full bg-white py-1 pr-3 pl-1 shadow-sm ring-1 ring-black/5 hover:bg-neutral-50"
+            >
+              <Avatar name={fields.name} />
+              <span className="truncate">{fields.email.trim()}</span>
+            </button>
+          )}
+        </fieldset>
+        {(errors.name || errors.email) && (
+          <p className="pl-[3.25rem] text-xs text-red-600">
+            {errors.name ?? errors.email}
+          </p>
+        )}
+
+        <label htmlFor={`${id}-subject`} className="sr-only">
+          Subject
+        </label>
+        <input
+          id={`${id}-subject`}
+          placeholder="Subject"
+          value={fields.subject}
+          onChange={(e) => change("subject")(e.target.value)}
+          className={`${input} mt-4 text-2xl font-semibold tracking-tight`}
+        />
+        {errors.subject && (
+          <p className="text-xs text-red-600">{errors.subject}</p>
+        )}
+
+        <label htmlFor={`${id}-body`} className="sr-only">
+          Message
+        </label>
+        <textarea
+          id={`${id}-body`}
+          placeholder="Write me something…"
+          value={fields.body}
+          onChange={(e) => change("body")(e.target.value)}
+          aria-invalid={!!errors.body}
+          className="mt-3 min-h-24 flex-1 resize-none bg-transparent leading-relaxed outline-none placeholder:text-neutral-400"
+        />
+        {errors.body && <p className="text-xs text-red-600">{errors.body}</p>}
+
         {/* bots fill in every field, people never see this one */}
         <input
           ref={honeypot}
@@ -173,58 +247,141 @@ export function Compose({
           aria-hidden="true"
           className="absolute -left-[9999px] size-px"
         />
-        <label htmlFor={`${id}-body`} className="sr-only">
-          Message
-        </label>
-        <textarea
-          id={`${id}-body`}
-          value={fields.body}
-          onChange={(e) => change("body")(e.target.value)}
-          aria-invalid={!!errors.body}
-          aria-describedby={errors.body ? `${id}-body-error` : undefined}
-          className="min-h-0 flex-1 resize-none px-4 py-3 text-neutral-900 outline-none"
-        />
-        {errors.body && (
-          <p id={`${id}-body-error`} className="px-4 pb-2 text-red-600">
-            {errors.body}
-          </p>
-        )}
       </fieldset>
+
+      {failed && (
+        <p
+          role="alert"
+          className="mx-6 mt-2 rounded-full bg-red-50 px-4 py-2 text-xs text-red-700"
+        >
+          {SEND_FAILED.replace(socials.email, "")}
+          <a href={`mailto:${socials.email}`} className="underline">
+            {socials.email}
+          </a>
+        </p>
+      )}
+
+      <div className="flex items-center justify-between px-4 pt-3 pb-4">
+        <TemplateMenu
+          writing={replacesWriting(fields)}
+          disabled={sending}
+          onPick={applyTemplate}
+        />
+        <button
+          type="submit"
+          disabled={sending}
+          className="flex items-center gap-2 rounded-xl bg-neutral-900 px-5 py-2.5 font-medium text-white shadow-sm hover:bg-neutral-700 disabled:bg-neutral-500"
+        >
+          {sending ? "Sending…" : "Send"}
+          <Send className="size-4" />
+        </button>
+      </div>
     </form>
   );
 }
 
-const input = "min-w-0 flex-1 bg-transparent text-neutral-900 outline-none";
+const input =
+  "bg-transparent outline-none placeholder:text-neutral-400 aria-[invalid=true]:placeholder:text-red-300";
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center gap-2 border-b border-black/10 px-4 py-2">
-      <span className="w-14 shrink-0 text-neutral-500">{label}</span>
-      {children}
-    </div>
-  );
-}
-
-function Field({
-  id,
-  label,
-  error,
-  children,
+// starter messages. asks first if it would replace something they've written
+function TemplateMenu({
+  writing,
+  disabled,
+  onPick,
 }: {
-  id: string;
-  label: string;
-  error?: string;
-  children: ReactNode;
+  writing: boolean;
+  disabled: boolean;
+  onPick: (template: Template) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState<Template | null>(null);
+
+  function close() {
+    setOpen(false);
+    setPending(null);
+  }
+
+  function pick(template: Template) {
+    if (writing) {
+      setPending(template);
+      return;
+    }
+    onPick(template);
+    close();
+  }
+
   return (
-    <div className="border-b border-black/10 px-4 py-2">
-      <div className="flex items-center gap-2">
-        <label htmlFor={id} className="w-14 shrink-0 text-neutral-500">
-          {label}
-        </label>
-        {children}
-      </div>
-      {error && <p className="mt-1 pl-16 text-red-600">{error}</p>}
+    // biome-ignore lint/a11y/noStaticElementInteractions: only catches focus leaving and esc from the menu inside
+    <div
+      className="relative"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) close();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && open) {
+          // close the menu, not the whole mail window
+          e.stopPropagation();
+          close();
+        }
+      }}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        aria-label="Use template"
+        aria-expanded={open}
+        onClick={() => (open ? close() : setOpen(true))}
+        className="peer grid size-10 place-items-center rounded-xl text-neutral-500 hover:bg-black/5 hover:text-neutral-900 aria-expanded:bg-black/5"
+      >
+        <FileText className="size-5" />
+      </button>
+      {!open && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-full left-0 mb-2 hidden rounded-lg bg-neutral-900 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-white peer-hover:block peer-focus-visible:block"
+        >
+          Use template
+        </span>
+      )}
+      {open && (
+        <div className="absolute bottom-full left-0 mb-2 w-60 rounded-xl bg-white p-1.5 text-sm shadow-lg ring-1 ring-black/10">
+          {pending ? (
+            <div className="p-2">
+              <p className="text-neutral-700">Replace your message?</p>
+              <div className="mt-2 flex justify-end gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPending(null)}
+                  className="rounded-lg px-2.5 py-1 text-neutral-600 hover:bg-black/5"
+                >
+                  Keep
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onPick(pending);
+                    close();
+                  }}
+                  className="rounded-lg bg-neutral-900 px-2.5 py-1 text-white hover:bg-neutral-700"
+                >
+                  Replace
+                </button>
+              </div>
+            </div>
+          ) : (
+            templates.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => pick(template)}
+                className="block w-full rounded-lg px-2.5 py-1.5 text-left hover:bg-black/5"
+              >
+                {template.label}
+              </button>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
