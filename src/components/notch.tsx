@@ -12,7 +12,7 @@ import { type CSSProperties, useEffect, useRef, useState } from "react";
 // the black shell plus the two curved "ears" where it meets the top edge.
 // data-state widens it a little for a live activity, or fully when open
 const styles =
-  "fixed top-0 left-1/2 z-50 -translate-x-1/2 bg-black text-white w-3xs h-9 rounded-b-xl overflow-visible transition-[width,height,border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] data-[state=activity]:w-80 data-[state=open]:w-[38rem] data-[state=open]:h-42 data-[state=open]:rounded-b-3xl before:absolute before:top-0 before:-left-3 before:size-3 before:content-[''] before:bg-[radial-gradient(circle_at_0_100%,transparent_12px,black_12.5px)] after:absolute after:top-0 after:-right-3 after:size-3 after:content-[''] after:bg-[radial-gradient(circle_at_100%_100%,transparent_12px,black_12.5px)]";
+  "fixed top-0 left-1/2 z-50 -translate-x-1/2 bg-black text-white w-48 h-9 rounded-b-xl overflow-visible transition-[width,height,border-radius] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] data-[state=activity]:w-80 data-[state=open]:w-[38rem] data-[state=open]:h-42 data-[state=open]:rounded-b-3xl before:absolute before:top-0 before:-left-3 before:size-3 before:content-[''] before:bg-[radial-gradient(circle_at_0_100%,transparent_12px,black_12.5px)] after:absolute after:top-0 after:-right-3 after:size-3 after:content-[''] after:bg-[radial-gradient(circle_at_100%_100%,transparent_12px,black_12.5px)]";
 
 // open spot matches the open panel's p-5. timing lives in .notch-cover
 const coverStyles = "notch-cover absolute block";
