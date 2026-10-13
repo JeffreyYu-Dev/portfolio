@@ -52,6 +52,7 @@ export function titleFor(path: string) {
   const to = normalizePath(path);
   if (to === "/") return "Home";
   if (to === "/about") return "About Me";
+  if (to === "/contact") return "Contact";
   const [, section, id] = to.split("/");
   if (section === "work" && id) return findWork(id)?.company ?? to;
   if (section === "projects" && id) return findProject(id)?.name ?? to;

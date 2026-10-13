@@ -88,6 +88,10 @@ describe("closeTab", () => {
 });
 
 describe("titleFor", () => {
+  it("names the contact page", () => {
+    expect(titleFor("/contact")).toBe("Contact");
+    expect(titleFor("/contact/")).toBe("Contact");
+  });
   it("names the fixed pages", () => {
     expect(titleFor("/")).toBe("Home");
     expect(titleFor("/about/")).toBe("About Me");
