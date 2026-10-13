@@ -36,9 +36,10 @@ export function Dock() {
             data-notch-toggle
             onClick={toggleNotch}
             aria-label="Now playing"
-            className={tile}
+            // the logo on a black squircle, like spotify's mac app icon
+            className={`${tile} grid place-items-center rounded-[22%] bg-black`}
           >
-            <img src="/spotify.png" alt="" className="size-full" />
+            <img src="/spotify.png" alt="" className="size-[70%]" />
           </button>
         </Item>
       </div>
