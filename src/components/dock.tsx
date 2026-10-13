@@ -15,7 +15,9 @@ export function Dock() {
       className="fixed bottom-1.5 left-1/2 z-40 -translate-x-1/2 max-md:hidden"
     >
       <div
-        className="flex items-center gap-1 rounded-2xl border border-white/40 bg-white/25 p-1 pb-2 shadow-[0_8px_30px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.5)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150"
+        // even padding all round, plus a little extra at the bottom for the running
+        // dots. the radius is the icons' corner plus the padding, so the curves nest
+        className="flex items-center gap-1.5 rounded-xl border border-white/40 bg-white/25 p-1.5 pb-2.5 shadow-[0_8px_30px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.5)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150"
       >
         {/* the portfolio lives in the browser, so it's always running */}
         <Item label="Zen" running>
@@ -57,12 +59,10 @@ function Item({
   children: ReactNode;
 }) {
   return (
-    <div
-      className="group relative size-7"
-    >
+    <div className="group relative size-7">
       {children}
       {running && (
-        <span className="pointer-events-none absolute left-1/2 -bottom-1.5 size-[3px] -translate-x-1/2 rounded-full bg-neutral-600/70" />
+        <span className="pointer-events-none absolute left-1/2 -bottom-[7px] size-[3px] -translate-x-1/2 rounded-full bg-neutral-600/70" />
       )}
       <span
         aria-hidden="true"
