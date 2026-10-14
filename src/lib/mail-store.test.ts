@@ -8,6 +8,7 @@ import {
   withDraft,
   withRead,
   withSent,
+  withStar,
 } from "#/lib/mail-store";
 
 const sent = (n: number): SentEmail => ({
@@ -29,6 +30,7 @@ describe("parseStored", () => {
       read: ["welcome"],
       sent: [],
       draft: null,
+      starred: [],
     });
   });
   it("drops malformed sent emails and drafts", () => {
@@ -41,6 +43,7 @@ describe("parseStored", () => {
       read: [],
       sent: [sent(1)],
       draft: null,
+      starred: [],
     });
   });
   it("round-trips a full state", () => {
@@ -48,6 +51,7 @@ describe("parseStored", () => {
       read: ["a"],
       sent: [sent(1)],
       draft: { ...newDraft(5), body: "hi" },
+      starred: ["a"],
     };
     expect(parseStored(JSON.stringify(state))).toEqual(state);
   });
@@ -74,6 +78,7 @@ describe("withSent", () => {
       read: [],
       sent: [sent(2), sent(1)],
       draft: null,
+      starred: [],
     });
   });
   it("keeps only the newest 20", () => {
@@ -94,6 +99,25 @@ describe("withDraft", () => {
   it("keeps when the draft was started", () => {
     const draft = { ...newDraft(123), body: "hi" };
     expect(withDraft(emptyMail, draft).draft?.startedAt).toBe(123);
+  });
+});
+
+describe("withStar", () => {
+  it("stars and unstars", () => {
+    const on = withStar(emptyMail, "a");
+    expect(on.starred).toEqual(["a"]);
+    expect(withStar(on, "a").starred).toEqual([]);
+  });
+});
+
+describe("parseStored stars", () => {
+  it("defaults stars for state saved before they existed", () => {
+    const raw = JSON.stringify({ read: [], sent: [], draft: null });
+    expect(parseStored(raw).starred).toEqual([]);
+  });
+  it("drops ids that aren't strings", () => {
+    const raw = JSON.stringify({ starred: ["a", 1, null] });
+    expect(parseStored(raw).starred).toEqual(["a"]);
   });
 });
 
@@ -139,6 +163,25 @@ describe("store", () => {
     vi.advanceTimersByTime(store.DRAFT_DELAY_MS * 2);
     expect(store.getMail().draft).toBeNull();
     expect(store.getMail().sent).toEqual([sent(1)]);
+  });
+
+  it("discarding cancels a pending draft save", async () => {
+    const store = await import("#/lib/mail-store");
+    store.saveDraft({ ...store.newDraft(1), body: "h" });
+    store.flushDraft();
+    store.saveDraft({ ...store.newDraft(1), body: "hi" });
+    store.discardDraft();
+    vi.advanceTimersByTime(store.DRAFT_DELAY_MS * 2);
+    expect(store.getMail().draft).toBeNull();
+  });
+
+  it("toggles stars and saves them", async () => {
+    const store = await import("#/lib/mail-store");
+    store.toggleStar("welcome");
+    expect(store.getMail().starred).toEqual(["welcome"]);
+    expect(
+      JSON.parse(storage.get(store.STORAGE_KEY) ?? "{}").starred,
+    ).toEqual(["welcome"]);
   });
 
   it("loads what was stored before", async () => {

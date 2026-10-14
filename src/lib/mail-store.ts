@@ -21,13 +21,20 @@ export type MailState = {
   read: string[];
   sent: SentEmail[];
   draft: Draft | null;
+  // seeded or sent email ids, yail's stars
+  starred: string[];
 };
 
 export const STORAGE_KEY = "mail:v1";
 export const DRAFT_DELAY_MS = 500;
 const MAX_SENT = 20;
 
-export const emptyMail: MailState = { read: [], sent: [], draft: null };
+export const emptyMail: MailState = {
+  read: [],
+  sent: [],
+  draft: null,
+  starred: [],
+};
 
 export function newDraft(now = Date.now()): Draft {
   return { name: "", email: "", subject: "", body: "", startedAt: now };
@@ -38,6 +45,13 @@ export function newDraft(now = Date.now()): Draft {
 export function withRead(state: MailState, id: string): MailState {
   if (state.read.includes(id)) return state;
   return { ...state, read: [...state.read, id] };
+}
+
+export function withStar(state: MailState, id: string): MailState {
+  const starred = state.starred.includes(id)
+    ? state.starred.filter((s) => s !== id)
+    : [...state.starred, id];
+  return { ...state, starred };
 }
 
 export function withSent(state: MailState, email: SentEmail): MailState {
@@ -79,6 +93,9 @@ export function parseStored(raw: string | null): MailState {
       ? data.sent.filter(isSent).slice(0, MAX_SENT)
       : [],
     draft: isDraft(data.draft) ? data.draft : null,
+    starred: Array.isArray(data.starred)
+      ? data.starred.filter((id): id is string => typeof id === "string")
+      : [],
   };
 }
 
@@ -137,6 +154,10 @@ export function markRead(id: string) {
   set(withRead(getMail(), id));
 }
 
+export function toggleStar(id: string) {
+  set(withStar(getMail(), id));
+}
+
 // called on every keystroke, so it waits for a pause before writing
 export function saveDraft(draft: Draft) {
   pendingDraft = draft;
@@ -159,6 +180,14 @@ export function recordSent(email: SentEmail) {
   pending = undefined;
   pendingDraft = null;
   set(withSent(getMail(), email));
+}
+
+// the bin in compose. a save still waiting would otherwise bring it back
+export function discardDraft() {
+  clearTimeout(pending);
+  pending = undefined;
+  pendingDraft = null;
+  set(withDraft(getMail(), null));
 }
 
 function subscribe(listener: () => void) {
