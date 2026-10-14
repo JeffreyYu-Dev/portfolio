@@ -68,6 +68,17 @@ html[data-booted] [data-boot] {
 }
 
 /* the bar running across the page after switching tabs, see src/components/browser.tsx */
+/* a minimized window's app icon shows once it has shrunk into the dock */
+@keyframes dock-badge {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dock-badge {
+    animation: dock-badge 150ms 400ms both;
+  }
+}
+
 @keyframes tab-loading {
   from { width: 0%; }
   to { width: 100%; }

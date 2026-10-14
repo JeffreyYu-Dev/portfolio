@@ -111,8 +111,13 @@ export function moved(
   return patched(state, id, () => ({ rect: { ...rect, ...at } }));
 }
 
+// it goes to the top of the order, which the dock reads to put the newest
+// minimized window last. topmost skips minimized windows, so nothing gains focus
 export function minimized(state: WindowsState, id: string): WindowsState {
-  return patched(state, id, () => ({ minimized: true }));
+  const win = state.windows[id];
+  if (!win || win.minimized) return state;
+  const top = state.top + 1;
+  return { ...patched(state, id, () => ({ minimized: true, z: top })), top };
 }
 
 export function zoomedTo(

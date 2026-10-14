@@ -1,5 +1,5 @@
 import { DesktopIcons } from "#/components/desktop-icons";
-import { BROWSER, useWindows } from "#/lib/window-store";
+import { useBrowserFullScreen } from "#/lib/dock-store";
 import type { ReactNode } from "react";
 
 // the wallpaper everything sits on, with its icons and the windows over it. the gradient shows
@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 // and the browser's page is the whole site. when the browser fills the screen,
 // the notch-high strip of wallpaper above it dims
 export function Desktop({ children }: { children: ReactNode }) {
-  const zoomed = useWindows().windows[BROWSER]?.zoomed ?? false;
+  const zoomed = useBrowserFullScreen();
 
   return (
     <>

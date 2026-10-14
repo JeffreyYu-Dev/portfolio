@@ -107,6 +107,13 @@ describe("minimizing and zooming", () => {
     const state = minimized(opened(initialWindows, "zed", rect), "zed");
     expect(state.windows.zed.minimized).toBe(true);
   });
+  it("orders minimized windows by when they were minimized", () => {
+    let state = opened(initialWindows, "zed", rect);
+    state = minimized(state, "zed");
+    state = minimized(state, BROWSER);
+    expect(state.windows[BROWSER].z).toBeGreaterThan(state.windows.zed.z);
+    expect(minimized(state, BROWSER)).toBe(state);
+  });
   it("zooms and unzooms, keeping the old spot to go back to", () => {
     const state = opened(initialWindows, "zed", rect);
     const big = toggledZoom(state, "zed");

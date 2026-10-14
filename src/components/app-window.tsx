@@ -1,3 +1,5 @@
+import { appOf } from "#/data/apps";
+import { useDockHidden } from "#/lib/dock-store";
 import {
   clampedPosition,
   closeWindow,
@@ -19,7 +21,11 @@ import {
   type MouseEvent,
   type PointerEvent,
   type ReactNode,
+  type RefObject,
   useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
 } from "react";
 
 // each app draws its own chrome, like real mac apps do. anything marked
@@ -33,11 +39,65 @@ const DESKTOP = "(min-width: 48rem)";
 
 const Current = createContext<{ id: string; focused: boolean } | null>(null);
 
-// windows stack among themselves in here, always under the dock and the notch
-// however high their focus order climbs. on phones there's no desktop: the
-// browser is the page, and other apps hide themselves
+// windows stack by focus order from z 10, under the dock (40) and the notch (50).
+// a minimized window is the dock's thumbnail for itself, so it goes up over the
+// dock to sit in its spot there
+const BASE_Z = 10;
+const MINIMIZED_Z = 45;
+
+// where the windows live. on phones there's no desktop: the browser is the page,
+// and other apps hide themselves
 export function WindowLayer({ children }: { children: ReactNode }) {
-  return <div className="md:relative md:z-30">{children}</div>;
+  return <div>{children}</div>;
+}
+
+type Thumbnail = { transform: string; scale: number };
+
+// a minimized window shrinks into its spot in the dock, scaled to fit, like the
+// mac's scale effect. the frame's edges stay put and a transform does the
+// shrinking, so the live window is its own thumbnail and eases back out the same
+// way. placed again whenever the dock moves or its spots shift
+function useThumbnail(
+  id: string,
+  frameRef: RefObject<HTMLElement | null>,
+  minimized: boolean,
+  // anything that can move the dock's spots, like other windows minimizing
+  layout: unknown,
+) {
+  const [thumb, setThumb] = useState<Thumbnail | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: layout is only a trigger
+  useLayoutEffect(() => {
+    if (!minimized) {
+      setThumb(null);
+      return;
+    }
+    function place() {
+      const frame = frameRef.current;
+      const slot = document.querySelector(
+        `[data-dock-slot="${CSS.escape(id)}"]`,
+      );
+      if (!frame || !slot) return;
+      const to = slot.getBoundingClientRect();
+      // offset sizes ignore transforms, so this is the window at full size
+      const w = frame.offsetWidth;
+      const h = frame.offsetHeight;
+      const scale = Math.min(to.width / w, to.height / h);
+      const x = to.left + (to.width - w * scale) / 2 - frame.offsetLeft;
+      const y = to.top + (to.height - h * scale) / 2 - frame.offsetTop;
+      setThumb({ transform: `translate(${x}px, ${y}px) scale(${scale})`, scale });
+    }
+    place();
+    const dock = document.querySelector("[data-dock]");
+    window.addEventListener("resize", place);
+    dock?.addEventListener("transitionend", place);
+    return () => {
+      window.removeEventListener("resize", place);
+      dock?.removeEventListener("transitionend", place);
+    };
+  }, [id, frameRef, minimized, layout]);
+
+  return thumb;
 }
 
 // a window's four edges, so every move between placed, css-placed and zoomed is
@@ -84,8 +144,13 @@ export function AppWindow({
 }) {
   const state = useWindows();
   const win = state.windows[id];
+  const frameRef = useRef<HTMLElement>(null);
+  const thumb = useThumbnail(id, frameRef, !!win?.minimized, state);
+  const dockHidden = useDockHidden();
   if (!win) return null;
   const focused = topmost(state) === id;
+  // place in the focus order. z itself only climbs, the dock has to stay above
+  const below = Object.values(state.windows).filter((w) => w.z < win.z).length;
 
   function onPointerDown(e: PointerEvent<HTMLElement>) {
     focusWindow(id);
@@ -166,21 +231,40 @@ export function AppWindow({
   return (
     <Current.Provider value={{ id, focused }}>
       <section
+        ref={frameRef}
         aria-label={label}
-        // minimized windows stay mounted so they come back as they were
-        hidden={win.minimized}
+        // minimized windows stay mounted, so they come back as they were and can
+        // be their own thumbnail. clicks go through to the dock spot under them
         inert={win.minimized}
         onPointerDown={onPointerDown}
         onDoubleClick={onDoubleClick}
-        style={{ ...edges(win), zIndex: win.z }}
+        style={{
+          ...edges(win),
+          zIndex: win.minimized ? MINIMIZED_Z : BASE_Z + below,
+          transform: win.minimized ? thumb?.transform : undefined,
+        }}
         // all placement is md and up. on phones it's a plain block in the page
-        className={`md:fixed md:top-(--top) md:right-(--right) md:bottom-(--bottom) md:left-(--left) md:flex md:flex-col md:overflow-hidden md:transition-[top,right,bottom,left,border-radius] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! md:data-dragging:transition-none! ${
+        className={`md:fixed md:top-(--top) md:right-(--right) md:bottom-(--bottom) md:left-(--left) md:flex md:origin-top-left md:flex-col md:overflow-hidden md:transition-[top,right,bottom,left,border-radius,transform,opacity] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! md:data-dragging:transition-none! ${
           win.zoomed
             ? "md:rounded-none"
             : "md:rounded-xl md:shadow-2xl md:ring-1 md:ring-black/10"
+        } ${
+          win.minimized
+            ? // no spot to go to yet, or the dock is tucked away with it inside
+              `pointer-events-none ${!thumb ? "invisible" : dockHidden ? "opacity-0" : ""}`
+            : ""
         } ${className}`}
       >
         {children}
+        {win.minimized && thumb && (
+          // the app's icon in the thumbnail's corner, scaled back up to dock size
+          <img
+            src={appOf(id).icon}
+            alt=""
+            className="dock-badge pointer-events-none absolute right-0 bottom-0 size-3 origin-bottom-right"
+            style={{ transform: `scale(${1 / thumb.scale})` }}
+          />
+        )}
       </section>
     </Current.Provider>
   );
