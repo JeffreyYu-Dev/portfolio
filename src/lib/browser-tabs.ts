@@ -5,11 +5,23 @@ import { yailTitle } from "#/lib/yail";
 
 // the browser's tabs, like a real browser's: navigating changes the tab you're on,
 // and each tab remembers its own page. they only last for the visit
-export type Tab = { id: number; path: string };
+// pinned holds the page a pinned tab belongs to. like zen, a pin can wander off to
+// other pages but can't close, closing it goes back to its page instead
+export type Tab = { id: number; path: string; pinned?: string };
 export type Tabs = { tabs: Tab[]; active: number; next: number };
 
+// home is always pinned first. any other page opens in a tab of its own after it
+export const HOME_PIN: Tab = { id: 1, path: "/", pinned: "/" };
+
 export function initialTabs(path: string): Tabs {
-  return { tabs: [{ id: 1, path: normalizePath(path) }], active: 1, next: 2 };
+  const start = { tabs: [HOME_PIN], active: HOME_PIN.id, next: 2 };
+  const to = normalizePath(path);
+  return to === HOME_PIN.path ? start : openTab(start, to);
+}
+
+// away from its page, so closing it would reset it
+export function strayed(tab: Tab) {
+  return tab.pinned !== undefined && tab.path !== tab.pinned;
 }
 
 export function activeTab(state: Tabs) {
@@ -33,19 +45,35 @@ export function openTab(state: Tabs, path: string): Tabs {
   return { tabs: [...state.tabs, tab], active: tab.id, next: state.next + 1 };
 }
 
+export function pinnedTabs(state: Tabs) {
+  return state.tabs.filter((tab) => tab.pinned !== undefined);
+}
+
+export function unpinnedTabs(state: Tabs) {
+  return state.tabs.filter((tab) => tab.pinned === undefined);
+}
+
 export function selectTab(state: Tabs, id: number): Tabs {
   if (!state.tabs.some((tab) => tab.id === id)) return state;
   return { ...state, active: id };
 }
 
-// the last tab can't close. closing the active one moves to its neighbour,
-// the one after it if there is one
+// the last tab can't close, and a pinned one goes back to its page instead.
+// closing the active one moves to its neighbour, the one after it if there is one
 export function closeTab(state: Tabs, id: number): Tabs {
   const index = state.tabs.findIndex((tab) => tab.id === id);
+  const tab = state.tabs[index];
+  if (tab?.pinned !== undefined) {
+    if (!strayed(tab)) return state;
+    const reset = { ...tab, path: tab.pinned };
+    return { ...state, tabs: state.tabs.map((t) => (t.id === id ? reset : t)) };
+  }
   if (index === -1 || state.tabs.length === 1) return state;
   const tabs = state.tabs.filter((tab) => tab.id !== id);
   const active =
-    id === state.active ? tabs[Math.min(index, tabs.length - 1)].id : state.active;
+    id === state.active
+      ? tabs[Math.min(index, tabs.length - 1)].id
+      : state.active;
   return { ...state, tabs, active };
 }
 

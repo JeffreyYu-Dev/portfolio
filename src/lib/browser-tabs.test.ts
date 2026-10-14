@@ -4,18 +4,57 @@ import { work } from "#/data/work";
 import {
   activeTab,
   closeTab,
+  HOME_PIN,
   initialTabs,
   navigate,
   openTab,
+  pinnedTabs,
   selectTab,
+  strayed,
   titleFor,
+  unpinnedTabs,
 } from "#/lib/browser-tabs";
 
 describe("initialTabs", () => {
-  it("starts with one tab on the visited page", () => {
+  it("starts on the home pin when visiting home", () => {
+    const state = initialTabs("/");
+    expect(state.tabs).toEqual([HOME_PIN]);
+    expect(activeTab(state)).toBe(HOME_PIN);
+  });
+  it("opens any other page in a tab after the home pin", () => {
     const state = initialTabs("/projects/renao/");
-    expect(state.tabs).toHaveLength(1);
+    expect(state.tabs.map((t) => t.path)).toEqual(["/", "/projects/renao"]);
     expect(activeTab(state).path).toBe("/projects/renao");
+    expect(activeTab(state).pinned).toBeUndefined();
+  });
+});
+
+describe("pins", () => {
+  it("splits pinned tabs from the rest", () => {
+    const state = openTab(initialTabs("/"), "/about");
+    expect(pinnedTabs(state)).toEqual([HOME_PIN]);
+    expect(unpinnedTabs(state).map((t) => t.path)).toEqual(["/about"]);
+  });
+  it("lets the pin wander to other pages", () => {
+    const state = navigate(initialTabs("/"), "/about");
+    expect(activeTab(state)).toMatchObject({ path: "/about", pinned: "/" });
+    expect(strayed(activeTab(state))).toBe(true);
+  });
+  it("closing a strayed pin sends it home instead", () => {
+    const state = navigate(initialTabs("/"), "/about");
+    const reset = closeTab(state, HOME_PIN.id);
+    expect(reset.tabs).toEqual([HOME_PIN]);
+    expect(reset.active).toBe(HOME_PIN.id);
+  });
+  it("closing a pin that's home does nothing", () => {
+    const state = openTab(initialTabs("/"), "/about");
+    expect(closeTab(state, HOME_PIN.id)).toBe(state);
+  });
+  it("closing the last other tab falls back to the pin", () => {
+    const state = initialTabs("/about");
+    const closed = closeTab(state, activeTab(state).id);
+    expect(closed.tabs).toEqual([HOME_PIN]);
+    expect(activeTab(closed)).toBe(HOME_PIN);
   });
 });
 
@@ -28,7 +67,11 @@ describe("navigate", () => {
   it("leaves other tabs alone", () => {
     const two = openTab(initialTabs("/about"), "/");
     const moved = navigate(two, "/projects/renao");
-    expect(moved.tabs.map((t) => t.path)).toEqual(["/about", "/projects/renao"]);
+    expect(moved.tabs.map((t) => t.path)).toEqual([
+      "/",
+      "/about",
+      "/projects/renao",
+    ]);
   });
   it("returns the same state when the page didn't change", () => {
     const state = initialTabs("/about");
@@ -39,8 +82,8 @@ describe("navigate", () => {
 describe("openTab", () => {
   it("adds a tab at the end and makes it active", () => {
     const state = openTab(initialTabs("/about"), "/");
-    expect(state.tabs).toHaveLength(2);
-    expect(activeTab(state)).toBe(state.tabs[1]);
+    expect(state.tabs).toHaveLength(3);
+    expect(activeTab(state)).toBe(state.tabs[2]);
     expect(activeTab(state).path).toBe("/");
   });
   it("gives every tab its own id", () => {
@@ -52,7 +95,7 @@ describe("openTab", () => {
 describe("selectTab", () => {
   it("activates the tab with that id", () => {
     const two = openTab(initialTabs("/about"), "/");
-    const first = two.tabs[0];
+    const first = two.tabs[1];
     expect(activeTab(selectTab(two, first.id))).toBe(first);
   });
   it("ignores ids that don't exist", () => {
@@ -68,22 +111,19 @@ describe("closeTab", () => {
   });
   it("closing a background tab keeps the active one", () => {
     const three = openTab(openTab(initialTabs("/a"), "/b"), "/c");
-    const closed = closeTab(three, three.tabs[0].id);
-    expect(closed.tabs.map((t) => t.path)).toEqual(["/b", "/c"]);
+    const closed = closeTab(three, three.tabs[1].id);
+    expect(closed.tabs.map((t) => t.path)).toEqual(["/", "/b", "/c"]);
     expect(activeTab(closed).path).toBe("/c");
   });
   it("closing the active tab activates the one after it", () => {
-    const three = selectTab(
-      openTab(openTab(initialTabs("/a"), "/b"), "/c"),
-      2,
-    );
-    const middle = three.tabs[1];
+    const three = selectTab(openTab(openTab(initialTabs("/a"), "/b"), "/c"), 3);
+    const middle = three.tabs[2];
     expect(activeTab(three)).toBe(middle);
     expect(activeTab(closeTab(three, middle.id)).path).toBe("/c");
   });
   it("closing the active last tab activates the one before it", () => {
     const two = openTab(initialTabs("/a"), "/b");
-    expect(activeTab(closeTab(two, two.tabs[1].id)).path).toBe("/a");
+    expect(activeTab(closeTab(two, two.tabs[2].id)).path).toBe("/a");
   });
 });
 

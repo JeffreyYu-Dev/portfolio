@@ -1,5 +1,4 @@
 import { YailMark } from "#/components/yail/mark";
-import { useBrowser } from "#/lib/browser-store";
 import { searchQuery } from "#/lib/yail";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Menu, Search } from "lucide-react";
@@ -7,9 +6,6 @@ import { type FormEvent, useEffect, useState } from "react";
 
 export function TopBar({ onMenu }: { onMenu: () => void }) {
   const navigate = useNavigate();
-  // the browser's "show sidebar" button sits over the top-left corner while its
-  // sidebar is tucked away, so the bar makes room for it
-  const { sidebar } = useBrowser();
   // on a results page the field shows what was searched
   const current = useRouterState({
     select: (s) =>
@@ -26,11 +22,7 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   }
 
   return (
-    <header
-      className={`flex h-12 shrink-0 items-center gap-2 px-2 md:gap-3 md:px-4 ${
-        sidebar ? "" : "md:pl-12"
-      }`}
-    >
+    <header className="flex h-12 shrink-0 items-center gap-2 px-2 md:gap-3 md:pr-4 md:pl-3.5">
       <button
         type="button"
         onClick={onMenu}
@@ -59,14 +51,12 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#444746]"
         />
       </form>
-      <span
+      <img
+        src="/hirono.jpg"
+        alt="Signed in as Guest"
         title="Guest"
-        role="img"
-        aria-label="Signed in as Guest"
-        className="ml-auto grid size-6 shrink-0 place-items-center rounded-full bg-[#0b57d0] text-xs font-medium text-white"
-      >
-        G
-      </span>
+        className="ml-auto size-6 shrink-0 rounded-full object-cover object-[50%_40%]"
+      />
     </header>
   );
 }

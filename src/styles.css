@@ -66,3 +66,19 @@ html[data-booted] [data-boot] {
     animation: status-colon 1s steps(1) infinite;
   }
 }
+
+/* the bar running across the page after switching tabs, see src/components/browser.tsx */
+@keyframes tab-loading {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.tab-loading {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tab-loading {
+    animation: tab-loading ease-out forwards;
+  }
+}

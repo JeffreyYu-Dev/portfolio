@@ -9,13 +9,23 @@ import {
 } from "#/lib/browser-address";
 
 describe("displayAddress", () => {
-  it("shows just the host on the home page", () => {
-    expect(displayAddress("/")).toBe(DISPLAY_HOST);
+  it("shows the full url of the home page", () => {
+    expect(displayAddress("/")).toBe(`https://${DISPLAY_HOST}/`);
   });
   it("appends the path elsewhere", () => {
     expect(displayAddress("/projects/renao")).toBe(
-      `${DISPLAY_HOST}/projects/renao`,
+      `https://${DISPLAY_HOST}/projects/renao`,
     );
+  });
+  it("reads back to the same page", () => {
+    expect(parseAddress(displayAddress("/about"))).toEqual({
+      kind: "route",
+      path: "/about",
+    });
+    expect(parseAddress(displayAddress("/"))).toEqual({
+      kind: "route",
+      path: "/",
+    });
   });
 });
 
@@ -82,20 +92,22 @@ describe("parseAddress", () => {
 
 describe("yail.com", () => {
   it("shows yail paths under its own host", () => {
-    expect(displayAddress("/yail")).toBe("yail.com");
-    expect(displayAddress("/yail/")).toBe("yail.com");
-    expect(displayAddress("/yail/inbox/welcome")).toBe("yail.com/inbox/welcome");
+    expect(displayAddress("/yail")).toBe("https://yail.com/");
+    expect(displayAddress("/yail/")).toBe("https://yail.com/");
+    expect(displayAddress("/yail/inbox/welcome")).toBe(
+      "https://yail.com/inbox/welcome",
+    );
   });
   it("shows the search string", () => {
     expect(displayAddress("/yail/search", "?q=games")).toBe(
-      "yail.com/search?q=games",
+      "https://yail.com/search?q=games",
     );
     expect(displayAddress("/yail/search", "q=games")).toBe(
-      "yail.com/search?q=games",
+      "https://yail.com/search?q=games",
     );
   });
   it("leaves lookalike paths on the main host", () => {
-    expect(displayAddress("/yailx")).toBe(`${DISPLAY_HOST}/yailx`);
+    expect(displayAddress("/yailx")).toBe(`https://${DISPLAY_HOST}/yailx`);
   });
   it.each([
     ["yail.com", "/yail"],

@@ -19,6 +19,8 @@ function Yail() {
   usePageEnter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [drawer, setDrawer] = useState(false);
+  // on desktop the menu button shrinks the rail to its icons, like gmail
+  const [collapsed, setCollapsed] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: close the drawer whenever the page changes
   useEffect(() => setDrawer(false), [pathname]);
@@ -38,9 +40,20 @@ function Yail() {
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-[#f6f8fc] text-xs text-[#1f1f1f] md:h-full md:min-h-0">
-      <TopBar onMenu={() => setDrawer((d) => !d)} />
+      <TopBar
+        onMenu={() =>
+          // md, where the rail stops being a drawer
+          window.matchMedia("(min-width: 48rem)").matches
+            ? setCollapsed((c) => !c)
+            : setDrawer((d) => !d)
+        }
+      />
       <div className="flex min-h-0 flex-1">
-        <Rail open={drawer} onClose={() => setDrawer(false)} />
+        <Rail
+          open={drawer}
+          collapsed={collapsed}
+          onClose={() => setDrawer(false)}
+        />
         <main className="min-w-0 flex-1 bg-white md:mr-3 md:mb-3 md:overflow-y-auto md:rounded-2xl">
           <Outlet />
         </main>

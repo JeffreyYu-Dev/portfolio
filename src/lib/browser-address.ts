@@ -1,5 +1,5 @@
-// the address bar shows this in front of the path. placeholder until there's a real domain
-export const DISPLAY_HOST = "jeffreyyu.dev";
+// the address bar shows this in front of the path, the site's real domain
+export const DISPLAY_HOST = "jeffreyyu.me";
 
 // sites the browser shows itself instead of opening a real tab. they're routes on
 // this site under prefix, dressed up with their own host in the address bar
@@ -15,15 +15,13 @@ export type Address =
   | { kind: "route"; path: string }
   | { kind: "external"; url: string };
 
-// what the address bar shows for the current route
+// the full url the address bar shows for the current route, like a real browser
 export function displayAddress(pathname: string, search = "") {
   const path = normalizePath(pathname);
   const site = hostedFor(path);
-  const shown = site
-    ? `${site.host}${path.slice(site.prefix.length)}`
-    : path === "/"
-      ? DISPLAY_HOST
-      : `${DISPLAY_HOST}${path}`;
+  const host = site ? site.host : DISPLAY_HOST;
+  const rest = site ? path.slice(site.prefix.length) : path;
+  const shown = `https://${host}${rest || "/"}`;
   if (!search) return shown;
   return `${shown}${search.startsWith("?") ? "" : "?"}${search}`;
 }
