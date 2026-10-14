@@ -22,6 +22,7 @@ import {
 } from "#/lib/browser-store";
 import { useGo } from "#/lib/page-transition";
 import {
+  Link,
   useCanGoBack,
   useHydrated,
   useRouter,
@@ -346,12 +347,21 @@ function AddressBar({ pathname }: { pathname: string }) {
   );
 }
 
-const essentials = [
+const essentials: {
+  label: string;
+  href?: string;
+  yail?: boolean;
+  icon: ReactNode;
+}[] = [
   { label: "GitHub", href: socials.github, icon: <GitHub /> },
   { label: "LinkedIn", href: socials.linkedin, icon: <LinkedIn /> },
-  { label: "Email", href: `mailto:${socials.email}`, icon: <Mail /> },
+  // opens yail in the browser rather than an outside mail app
+  { label: "Yail", yail: true, icon: <Mail /> },
   { label: "Résumé", href: socials.resume, icon: <FileUser /> },
 ];
+
+const tileClass =
+  "grid h-10 place-items-center rounded-lg bg-white/40 text-neutral-700 ring-1 ring-black/5 hover:bg-white/70 [&>svg]:size-4";
 
 // zen's pinned-site grid at the top of the sidebar
 function Essentials() {
@@ -359,16 +369,28 @@ function Essentials() {
     <ul className="grid grid-cols-4 gap-1.5">
       {essentials.map((item) => (
         <li key={item.label}>
-          <a
-            href={item.href}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={item.label}
-            title={item.label}
-            className="grid h-10 place-items-center rounded-lg bg-white/40 text-neutral-700 ring-1 ring-black/5 hover:bg-white/70 [&>svg]:size-4"
-          >
-            {item.icon}
-          </a>
+          {item.yail ? (
+            <Link
+              to="/yail/$box"
+              params={{ box: "inbox" }}
+              aria-label={item.label}
+              title={item.label}
+              className={tileClass}
+            >
+              {item.icon}
+            </Link>
+          ) : (
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={item.label}
+              title={item.label}
+              className={tileClass}
+            >
+              {item.icon}
+            </a>
+          )}
         </li>
       ))}
     </ul>

@@ -9,7 +9,6 @@ import { Boot } from "#/components/boot";
 import { Browser } from "#/components/browser";
 import { Desktop } from "#/components/desktop";
 import { Dock } from "#/components/dock";
-import { MailApp } from "#/components/mail/mail-app";
 import { Notch } from "#/components/notch";
 import { bootScript } from "#/lib/boot";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
@@ -50,7 +49,6 @@ function RootLayout() {
       <Boot />
       <Notch />
       <Dock />
-      <MailApp />
       <Desktop>
         <Browser>
           {/* data-page: what page-transition.ts snapshots when leaving. yail is a

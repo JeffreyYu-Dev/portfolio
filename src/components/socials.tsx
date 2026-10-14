@@ -1,29 +1,19 @@
 import { GitHub, LinkedIn } from "#/components/brand-icons";
 import { socials } from "#/data/socials";
 import { useGo } from "#/lib/page-transition";
-import { openWindow } from "#/lib/window-store";
 import { Link } from "@tanstack/react-router";
 import { FileUser, Mail } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 
-// email opens mail, the rest open in a new tab.
+// email opens yail, the rest open in a new tab.
 // each icon shows its name above it on hover
 export function Socials() {
-  const go = useGo("contact");
-  // desktops open the mail window, phones (no dock or desktop there) get the page
-  const email = (e: MouseEvent<HTMLAnchorElement>) => {
-    if (window.matchMedia("(min-width: 768px)").matches) {
-      e.preventDefault();
-      openWindow("mail");
-      return;
-    }
-    go("/contact")(e);
-  };
+  const go = useGo("yail");
 
   return (
     <ul className="flex items-center gap-3">
       <li>
-        <Item label="Email" to="/contact" onClick={email}>
+        <Item label="Email" yail onClick={go("/yail/inbox")}>
           <Mail />
         </Item>
       </li>
@@ -49,13 +39,13 @@ export function Socials() {
 function Item({
   label,
   href,
-  to,
+  yail,
   onClick,
   children,
 }: {
   label: string;
   href?: string;
-  to?: "/contact";
+  yail?: boolean;
   onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
 }) {
@@ -70,9 +60,15 @@ function Item({
     </span>
   );
 
-  if (to) {
+  if (yail) {
     return (
-      <Link to={to} onClick={onClick} aria-label={label} className={className}>
+      <Link
+        to="/yail/$box"
+        params={{ box: "inbox" }}
+        onClick={onClick}
+        aria-label={label}
+        className={className}
+      >
         {children}
         {tip}
       </Link>

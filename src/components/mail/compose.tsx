@@ -13,26 +13,19 @@ import {
 } from "#/lib/mail-store";
 import { SEND_FAILED } from "#/lib/send-mail";
 import { sendMail } from "#/server/send-mail";
-import { Send } from "lucide-react";
-import {
-  type FormEvent,
-  type ReactNode,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from "react";
+import { Trash2 } from "lucide-react";
+import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
-// a new message to me. the draft is saved as they type, so closing the window or
-// a failed send never loses what they wrote
+// the fields of a new message to jeffrey. the draft is saved as they type, so
+// closing, minimising or a failed send never loses what they wrote
 export function Compose({
   initial,
   onSent,
-  onCancel,
+  onDiscard,
 }: {
   initial: Draft;
-  onSent: (sent: SentEmail, replyTo: string) => void;
-  onCancel?: () => void;
+  onSent: (sent: SentEmail) => void;
+  onDiscard: () => void;
 }) {
   const [fields, setFields] = useState<MailFields>({
     name: initial.name,
@@ -43,6 +36,7 @@ export function Compose({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const honeypot = useRef<HTMLInputElement>(null);
   const id = useId();
 
@@ -55,6 +49,15 @@ export function Compose({
     setErrors((e) => ({ ...e, [key]: undefined }));
     saveDraft({ ...next, startedAt: initial.startedAt });
   };
+
+  function discard() {
+    const written = Object.values(fields).some((v) => v.trim());
+    if (written && !confirming) {
+      setConfirming(true);
+      return;
+    }
+    onDiscard();
+  }
 
   async function send(e: FormEvent) {
     e.preventDefault();
@@ -84,7 +87,7 @@ export function Compose({
         date: new Date().toISOString(),
       };
       recordSent(sent);
-      onSent(sent, checked.mail.email);
+      onSent(sent);
     } catch {
       setFailed(true);
     } finally {
@@ -92,78 +95,88 @@ export function Compose({
     }
   }
 
+  const line =
+    "flex items-center gap-2 border-b border-[#e0e0e0] py-2 text-sm";
+  const input =
+    "min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#5f6368]";
+
   return (
     <form
       onSubmit={send}
       noValidate
-      className="flex h-full flex-col bg-white text-xs"
+      className="flex h-full min-h-0 flex-col bg-white"
     >
-      <div className="flex h-12 shrink-0 items-center justify-between border-b border-black/10 px-4">
-        {onCancel ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-neutral-500 hover:text-neutral-900"
-          >
-            Cancel
-          </button>
-        ) : (
-          <span />
-        )}
-        <span className="font-semibold text-neutral-800">New Message</span>
-        <button
-          type="submit"
-          disabled={sending}
-          aria-label="Send"
-          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sky-600 hover:bg-sky-50 disabled:text-neutral-400"
-        >
-          {sending ? "Sending…" : <Send className="size-4" />}
-        </button>
-      </div>
-
-      {failed && (
-        <p
-          role="alert"
-          className="border-b border-black/10 bg-red-50 px-4 py-2 text-red-700"
-        >
-          {SEND_FAILED.replace(socials.email, "")}
-          <a href={`mailto:${socials.email}`} className="underline">
-            {socials.email}
-          </a>
-        </p>
-      )}
-
-      <fieldset disabled={sending} className="flex min-h-0 flex-1 flex-col">
-        <Row label="To:">
-          <span className="text-neutral-800">Jeffrey Yu</span>
-        </Row>
-        <Field id={`${id}-name`} label="Name:" error={errors.name}>
+      <fieldset
+        disabled={sending}
+        className="flex min-h-0 flex-1 flex-col px-4"
+      >
+        <div className={line}>
+          <span className="text-[#5f6368]">To</span>
+          <span className="rounded-full bg-[#e8eaed] px-2 py-0.5">
+            Jeffrey Yu
+          </span>
+        </div>
+        <div className={line}>
+          <span className="text-[#5f6368]">From</span>
+          <label htmlFor={`${id}-name`} className="sr-only">
+            Your name
+          </label>
           <input
             id={`${id}-name`}
+            placeholder="Your name"
             autoComplete="name"
             value={fields.name}
             onChange={(e) => change("name")(e.target.value)}
-            className={input}
+            aria-invalid={!!errors.name}
+            className={`${input} max-w-36`}
           />
-        </Field>
-        <Field id={`${id}-email`} label="Email:" error={errors.email}>
+          <label htmlFor={`${id}-email`} className="sr-only">
+            Your email
+          </label>
           <input
             id={`${id}-email`}
             type="email"
+            placeholder="your@email.com"
             autoComplete="email"
             value={fields.email}
             onChange={(e) => change("email")(e.target.value)}
+            aria-invalid={!!errors.email}
             className={input}
           />
-        </Field>
-        <Field id={`${id}-subject`} label="Subject:" error={errors.subject}>
+        </div>
+        {(errors.name || errors.email) && (
+          <p className="pt-1 text-xs text-[#d93025]">
+            {errors.name ?? errors.email}
+          </p>
+        )}
+        <div className={line}>
+          <label htmlFor={`${id}-subject`} className="sr-only">
+            Subject
+          </label>
           <input
             id={`${id}-subject`}
+            placeholder="Subject"
             value={fields.subject}
             onChange={(e) => change("subject")(e.target.value)}
             className={input}
           />
-        </Field>
+        </div>
+        {errors.subject && (
+          <p className="pt-1 text-xs text-[#d93025]">{errors.subject}</p>
+        )}
+        <label htmlFor={`${id}-body`} className="sr-only">
+          Message
+        </label>
+        <textarea
+          id={`${id}-body`}
+          value={fields.body}
+          onChange={(e) => change("body")(e.target.value)}
+          aria-invalid={!!errors.body}
+          className="min-h-24 flex-1 resize-none py-3 text-sm outline-none"
+        />
+        {errors.body && (
+          <p className="pb-1 text-xs text-[#d93025]">{errors.body}</p>
+        )}
         {/* bots fill in every field, people never see this one */}
         <input
           ref={honeypot}
@@ -173,58 +186,53 @@ export function Compose({
           aria-hidden="true"
           className="absolute -left-[9999px] size-px"
         />
-        <label htmlFor={`${id}-body`} className="sr-only">
-          Message
-        </label>
-        <textarea
-          id={`${id}-body`}
-          value={fields.body}
-          onChange={(e) => change("body")(e.target.value)}
-          aria-invalid={!!errors.body}
-          aria-describedby={errors.body ? `${id}-body-error` : undefined}
-          className="min-h-0 flex-1 resize-none px-4 py-3 text-neutral-900 outline-none"
-        />
-        {errors.body && (
-          <p id={`${id}-body-error`} className="px-4 pb-2 text-red-600">
-            {errors.body}
-          </p>
-        )}
       </fieldset>
-    </form>
-  );
-}
 
-const input = "min-w-0 flex-1 bg-transparent text-neutral-900 outline-none";
+      {failed && (
+        <p
+          role="alert"
+          className="mx-4 rounded bg-[#fce8e6] px-3 py-2 text-xs text-[#c5221f]"
+        >
+          {SEND_FAILED.replace(socials.email, "")}
+          <a href={`mailto:${socials.email}`} className="underline">
+            {socials.email}
+          </a>
+        </p>
+      )}
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center gap-2 border-b border-black/10 px-4 py-2">
-      <span className="w-14 shrink-0 text-neutral-500">{label}</span>
-      {children}
-    </div>
-  );
-}
-
-function Field({
-  id,
-  label,
-  error,
-  children,
-}: {
-  id: string;
-  label: string;
-  error?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="border-b border-black/10 px-4 py-2">
-      <div className="flex items-center gap-2">
-        <label htmlFor={id} className="w-14 shrink-0 text-neutral-500">
-          {label}
-        </label>
-        {children}
+      <div className="flex items-center gap-2 px-4 py-3">
+        <button
+          type="submit"
+          disabled={sending}
+          className="rounded-full bg-[#0b57d0] px-6 py-2 text-sm font-medium text-white hover:shadow-md disabled:bg-[#0b57d0]/60"
+        >
+          {sending ? "Sending…" : "Send"}
+        </button>
+        <span className="flex-1" />
+        {confirming && (
+          <span className="flex items-center gap-2 text-xs text-[#444746]">
+            Discard draft?
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="rounded px-2 py-1 hover:bg-black/5"
+            >
+              Cancel
+            </button>
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={discard}
+          aria-label={confirming ? "Discard" : "Discard draft"}
+          title="Discard draft"
+          className={`grid size-9 place-items-center rounded-full hover:bg-black/5 ${
+            confirming ? "text-[#d93025]" : "text-[#444746]"
+          }`}
+        >
+          <Trash2 className="size-5" />
+        </button>
       </div>
-      {error && <p className="mt-1 pl-16 text-red-600">{error}</p>}
-    </div>
+    </form>
   );
 }

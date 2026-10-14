@@ -1,11 +1,15 @@
+import { ComposeWindow } from "#/components/yail/compose-window";
 import { Rail } from "#/components/yail/rail";
+import { SentToast } from "#/components/yail/sent-toast";
 import { TopBar } from "#/components/yail/top-bar";
 import { useBrowser } from "#/lib/browser-store";
+import { getMail, newDraft } from "#/lib/mail-store";
 import { usePageEnter } from "#/lib/page-transition";
-import { closeCompose } from "#/lib/yail-compose";
+import { closeCompose, openCompose } from "#/lib/yail-compose";
 import {
   createFileRoute,
   Outlet,
+  useRouter,
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -24,6 +28,17 @@ function Yail() {
   // compose belongs to yail, leaving the site closes it (the draft is kept)
   useEffect(() => () => closeCompose(), []);
 
+  const router = useRouter();
+  // /contact (and any ?compose link) arrives with compose open
+  const wantsCompose = useRouterState({
+    select: (s) => "compose" in (s.location.search as object),
+  });
+  useEffect(() => {
+    if (!wantsCompose) return;
+    openCompose(getMail().draft ?? newDraft());
+    router.navigate({ href: pathname, replace: true });
+  }, [wantsCompose, pathname, router]);
+
   return (
     <div
       // full screen puts the notch over the top bar, so it steps down with it
@@ -38,6 +53,8 @@ function Yail() {
           <Outlet />
         </main>
       </div>
+      <ComposeWindow />
+      <SentToast />
     </div>
   );
 }
