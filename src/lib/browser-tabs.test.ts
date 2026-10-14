@@ -88,6 +88,12 @@ describe("closeTab", () => {
 });
 
 describe("titleFor", () => {
+  it("names yail pages like gmail", () => {
+    expect(titleFor("/yail/inbox")).toBe("Inbox – Yail");
+    expect(titleFor("/yail/inbox/welcome/")).toBe(
+      "hey, thanks for stopping by – Yail",
+    );
+  });
   it("names the contact page", () => {
     expect(titleFor("/contact")).toBe("Contact");
     expect(titleFor("/contact/")).toBe("Contact");

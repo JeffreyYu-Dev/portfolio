@@ -1,6 +1,7 @@
 import { findProject } from "#/data/projects";
 import { findWork } from "#/data/work";
 import { normalizePath } from "#/lib/browser-address";
+import { yailTitle } from "#/lib/yail";
 
 // the browser's tabs, like a real browser's: navigating changes the tab you're on,
 // and each tab remembers its own page. they only last for the visit
@@ -53,6 +54,7 @@ export function titleFor(path: string) {
   if (to === "/") return "Home";
   if (to === "/about") return "About Me";
   if (to === "/contact") return "Contact";
+  if (to === "/yail" || to.startsWith("/yail/")) return yailTitle(to);
   const [, section, id] = to.split("/");
   if (section === "work" && id) return findWork(id)?.company ?? to;
   if (section === "projects" && id) return findProject(id)?.name ?? to;
