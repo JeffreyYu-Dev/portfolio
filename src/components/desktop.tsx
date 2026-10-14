@@ -1,7 +1,8 @@
+import { DesktopIcons } from "#/components/desktop-icons";
 import { BROWSER, useWindows } from "#/lib/window-store";
 import type { ReactNode } from "react";
 
-// the wallpaper everything sits on, with the windows over it. the gradient shows
+// the wallpaper everything sits on, with its icons and the windows over it. the gradient shows
 // until public/wallpaper.jpg exists. on phones and small tablets it steps aside
 // and the browser's page is the whole site. when the browser fills the screen,
 // the notch-high strip of wallpaper above it dims
@@ -21,6 +22,7 @@ export function Desktop({ children }: { children: ReactNode }) {
           zoomed ? "opacity-100" : "opacity-0"
         }`}
       />
+      <DesktopIcons />
       {children}
     </>
   );

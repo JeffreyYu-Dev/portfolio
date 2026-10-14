@@ -10,6 +10,7 @@ import { Boot } from "#/components/boot";
 import { Browser } from "#/components/browser";
 import { Desktop } from "#/components/desktop";
 import { Dock } from "#/components/dock";
+import { Finder } from "#/components/finder";
 import { Notch } from "#/components/notch";
 import { bootScript } from "#/lib/boot";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
@@ -66,6 +67,8 @@ function RootLayout() {
               <Outlet />
             </div>
           </Browser>
+          <Finder folder="projects" />
+          <Finder folder="work" />
         </WindowLayer>
       </Desktop>
     </>

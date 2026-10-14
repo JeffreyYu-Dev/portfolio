@@ -31,7 +31,7 @@ import {
   useBrowser,
   wheeled,
 } from "#/lib/browser-store";
-import { BROWSER, useWindows } from "#/lib/window-store";
+import { BROWSER, openWindow, useWindows } from "#/lib/window-store";
 import { useGo } from "#/lib/page-transition";
 import {
   useCanGoBack,
@@ -75,6 +75,16 @@ export function Browser({ children }: { children: ReactNode }) {
       <Frame>{children}</Frame>
     </AppWindow>
   );
+}
+
+// for things outside the browser that open a page in it, like desktop icons. the
+// browser comes back to the front first, even from closed or minimized
+export function useOpenInBrowser() {
+  const router = useRouter();
+  return (path: string) => {
+    openWindow(BROWSER);
+    router.navigate({ href: path });
+  };
 }
 
 function Frame({ children }: { children: ReactNode }) {
