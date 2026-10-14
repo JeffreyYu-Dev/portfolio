@@ -14,6 +14,12 @@ import {
   selectTab,
   titleFor,
 } from "#/lib/browser-tabs";
+import {
+  scrolledTo,
+  toggleSidebar,
+  useBrowser,
+  wheeled,
+} from "#/lib/browser-store";
 import { useGo } from "#/lib/page-transition";
 import {
   useCanGoBack,
@@ -26,30 +32,97 @@ import {
   ArrowRight,
   FileUser,
   Mail,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   RotateCw,
   X,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  type Ref,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 // the portfolio's window, styled after zen browser: a tinted frame with tabs down
-// a left sidebar and the page in a rounded card. on phones and small tablets the
-// frame and sidebar drop away and the card is the whole page
+// a left sidebar and the page in a rounded card. scrolling into a page grows it to
+// fill the screen. on phones and small tablets the frame and sidebar drop away and
+// the card is the whole page
 export function Browser({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { expanded, sidebar } = useBrowser();
+  // the collapsed sidebar sliding out over the page, like zen's compact mode
+  const [peek, setPeek] = useState(false);
+  const shown = sidebar || peek;
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (sidebar) setPeek(false);
+  }, [sidebar]);
 
   return (
-    <div className="h-full gap-2 md:flex md:rounded-xl md:border md:border-white/30 md:bg-gradient-to-br md:from-rose-200/60 md:via-violet-200/60 md:to-sky-200/60 md:p-2 md:shadow-2xl md:ring-1 md:ring-black/10 md:backdrop-blur-2xl">
-      <Sidebar pathname={pathname} />
+    <div
+      className={`relative h-full md:flex md:overflow-hidden md:border md:bg-gradient-to-br md:from-rose-200/60 md:via-violet-200/60 md:to-sky-200/60 md:backdrop-blur-2xl md:transition-[padding,border-radius,border-color,box-shadow] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! ${
+        expanded
+          ? "md:rounded-none md:border-transparent md:p-0 md:shadow-none"
+          : "md:rounded-xl md:border-white/30 md:p-2 md:shadow-2xl md:ring-1 md:ring-black/10"
+      }`}
+    >
+      {/* holds the docked sidebar's space. animating its width slides the page over */}
+      <div
+        aria-hidden="true"
+        className={`shrink-0 transition-[width,margin] duration-300 ease-out motion-reduce:transition-none! max-md:hidden ${
+          sidebar ? "mr-2 w-52" : "mr-0 w-0"
+        }`}
+      />
+      {!sidebar && (
+        <>
+          {/* bumping the left edge peeks the sidebar out */}
+          <div
+            aria-hidden="true"
+            onPointerEnter={() => setPeek(true)}
+            // moving off the strip onto the page, not into the sidebar, puts it away
+            onPointerLeave={(e) => {
+              const into = e.relatedTarget;
+              if (!(into instanceof Node && sidebarRef.current?.contains(into)))
+                setPeek(false);
+            }}
+            className="absolute inset-y-0 left-0 z-10 w-2 max-md:hidden"
+          />
+          <button
+            type="button"
+            aria-label="Show sidebar"
+            title="Show sidebar"
+            onClick={toggleSidebar}
+            className="absolute top-3 left-3 z-10 grid size-7 place-items-center rounded-md text-neutral-500 hover:bg-black/5 hover:text-neutral-900 max-md:hidden [&>svg]:size-4"
+          >
+            <PanelLeftOpen />
+          </button>
+        </>
+      )}
+      <Sidebar
+        ref={sidebarRef}
+        pathname={pathname}
+        shown={shown}
+        floating={!sidebar}
+        onPeek={setPeek}
+      />
       {/* relative + isolate: page-transition.ts parks its exit copy in here at z -1,
           outside the scroller so it doesn't scroll with the content */}
       <div
         data-ghost-host
-        className="relative isolate flex-1 bg-white md:overflow-hidden md:rounded-lg md:shadow-sm md:ring-1 md:ring-black/5"
+        className={`relative isolate flex-1 bg-white md:overflow-hidden md:shadow-sm md:transition-[border-radius] md:duration-[400ms] md:motion-reduce:transition-none! ${
+          expanded ? "md:rounded-none" : "md:rounded-lg md:ring-1 md:ring-black/5"
+        }`}
       >
         <div
           data-browser-content
           data-scroll-restoration-id="browser-content"
+          onScroll={(e) => scrolledTo(e.currentTarget.scrollTop)}
+          onWheel={(e) => wheeled(e.deltaY, e.currentTarget.scrollTop)}
           className="md:h-full md:overflow-y-auto"
         >
           {children}
@@ -59,7 +132,20 @@ export function Browser({ children }: { children: ReactNode }) {
   );
 }
 
-function Sidebar({ pathname }: { pathname: string }) {
+function Sidebar({
+  ref,
+  pathname,
+  shown,
+  floating,
+  onPeek,
+}: {
+  ref: Ref<HTMLElement>;
+  pathname: string;
+  shown: boolean;
+  // collapsed, so it slides out over the page instead of sitting beside it
+  floating: boolean;
+  onPeek: (peek: boolean) => void;
+}) {
   const router = useRouter();
   const canGoBack = useCanGoBack();
   // the server can't see the history, so back starts disabled until hydrated,
@@ -67,9 +153,24 @@ function Sidebar({ pathname }: { pathname: string }) {
   const hydrated = useHydrated();
 
   return (
+    // one sidebar that docks or floats, so its tabs keep their state either way.
+    // inert while tucked away, so tabbing skips it
     <nav
+      ref={ref}
       aria-label="Browser"
-      className="flex w-52 shrink-0 flex-col gap-3 max-md:hidden"
+      inert={!shown}
+      onPointerLeave={() => floating && onPeek(false)}
+      onFocus={() => floating && onPeek(true)}
+      onBlur={(e) => {
+        if (floating && !e.currentTarget.contains(e.relatedTarget)) onPeek(false);
+      }}
+      className={`absolute top-2 bottom-2 left-2 z-20 flex w-52 flex-col gap-3 transition-[translate,background-color,box-shadow] duration-300 ease-out motion-reduce:transition-none! max-md:hidden ${
+        shown ? "translate-x-0" : "-translate-x-[calc(100%+1rem)]"
+      } ${
+        floating
+          ? "rounded-lg bg-white/70 p-2 shadow-xl ring-1 ring-black/10 backdrop-blur-xl"
+          : ""
+      }`}
     >
       <div className="flex items-center justify-between px-1 pt-1">
         <TrafficLights />
@@ -86,6 +187,12 @@ function Sidebar({ pathname }: { pathname: string }) {
           </NavButton>
           <NavButton label="Reload" onClick={() => router.invalidate()}>
             <RotateCw />
+          </NavButton>
+          <NavButton
+            label={floating ? "Keep sidebar open" : "Hide sidebar"}
+            onClick={toggleSidebar}
+          >
+            {floating ? <PanelLeftOpen /> : <PanelLeftClose />}
           </NavButton>
         </div>
       </div>

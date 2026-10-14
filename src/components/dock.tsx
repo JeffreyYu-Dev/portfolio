@@ -1,4 +1,5 @@
 import { useNowPlaying } from "#/components/notch-player";
+import { useBrowser } from "#/lib/browser-store";
 import { toggleNotch } from "#/lib/notch-store";
 import { useGo } from "#/lib/page-transition";
 import { Link } from "@tanstack/react-router";
@@ -8,11 +9,16 @@ import type { ReactNode } from "react";
 export function Dock() {
   const track = useNowPlaying();
   const go = useGo("dock");
+  const { expanded } = useBrowser();
 
   return (
     <nav
       aria-label="Dock"
-      className="fixed bottom-1.5 left-1/2 z-40 -translate-x-1/2 max-md:hidden"
+      // slides away while the browser fills the screen, like a full-screen mac app
+      inert={expanded}
+      className={`fixed bottom-1.5 left-1/2 z-40 -translate-x-1/2 transition-[translate,opacity] duration-300 ease-out motion-reduce:transition-none! max-md:hidden ${
+        expanded ? "translate-y-[150%] opacity-0" : ""
+      }`}
     >
       <div
         // even padding all round, plus a little extra at the bottom for the running
