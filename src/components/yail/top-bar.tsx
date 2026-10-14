@@ -1,4 +1,5 @@
 import { YailMark } from "#/components/yail/mark";
+import { useBrowser } from "#/lib/browser-store";
 import { searchQuery } from "#/lib/yail";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Menu, Search } from "lucide-react";
@@ -6,6 +7,9 @@ import { type FormEvent, useEffect, useState } from "react";
 
 export function TopBar({ onMenu }: { onMenu: () => void }) {
   const navigate = useNavigate();
+  // the browser's "show sidebar" button sits over the top-left corner while its
+  // sidebar is tucked away, so the bar makes room for it
+  const { sidebar } = useBrowser();
   // on a results page the field shows what was searched
   const current = useRouterState({
     select: (s) =>
@@ -22,7 +26,11 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   }
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 px-2 md:gap-3 md:px-4">
+    <header
+      className={`flex h-12 shrink-0 items-center gap-2 px-2 md:gap-3 md:px-4 ${
+        sidebar ? "" : "md:pl-12"
+      }`}
+    >
       <button
         type="button"
         onClick={onMenu}

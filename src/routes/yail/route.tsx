@@ -2,7 +2,6 @@ import { ComposeWindow } from "#/components/yail/compose-window";
 import { Rail } from "#/components/yail/rail";
 import { SentToast } from "#/components/yail/sent-toast";
 import { TopBar } from "#/components/yail/top-bar";
-import { useBrowser } from "#/lib/browser-store";
 import { usePageEnter } from "#/lib/page-transition";
 import { closeCompose, openDraft } from "#/lib/yail-compose";
 import {
@@ -18,7 +17,6 @@ export const Route = createFileRoute("/yail")({ component: Yail });
 // yail.com: gmail, recreated. the shell stays put while the pages inside change
 function Yail() {
   usePageEnter();
-  const { expanded } = useBrowser();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [drawer, setDrawer] = useState(false);
 
@@ -39,12 +37,7 @@ function Yail() {
   }, [wantsCompose, pathname, router]);
 
   return (
-    <div
-      // full screen puts the notch over the top bar, so it steps down with it
-      className={`relative flex min-h-dvh flex-col bg-[#f6f8fc] text-xs text-[#1f1f1f] md:h-full md:min-h-0 md:transition-[padding] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! ${
-        expanded ? "md:pt-9" : ""
-      }`}
-    >
+    <div className="relative flex min-h-dvh flex-col bg-[#f6f8fc] text-xs text-[#1f1f1f] md:h-full md:min-h-0">
       <TopBar onMenu={() => setDrawer((d) => !d)} />
       <div className="flex min-h-0 flex-1">
         <Rail open={drawer} onClose={() => setDrawer(false)} />
