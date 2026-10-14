@@ -1,6 +1,5 @@
 import { appOf } from "#/data/apps";
 import { useDockHidden } from "#/lib/dock-store";
-import { type Box, fitIn, GENIE_MS, genieTransform } from "#/lib/genie";
 import {
   clampedPosition,
   closeWindow,
@@ -52,66 +51,40 @@ export function WindowLayer({ children }: { children: ReactNode }) {
   return <div>{children}</div>;
 }
 
-// a minimized window is drawn as its own thumbnail in its dock spot. it gets
-// there with the genie, squishing down into the spot and pouring back out on
-// restore. the transform is set straight on the element, never through react,
-// so a re-render mid-animation can't snap it. placed again whenever the dock
-// moves or its spots shift
-function useMinimize(
+type Thumbnail = { transform: string; scale: number };
+
+// a minimized window is drawn as its own thumbnail, scaled down into its spot
+// in the dock. it goes there and back instantly, no animation. placed again
+// whenever the dock moves or its spots shift
+function useThumbnail(
   id: string,
   frameRef: RefObject<HTMLElement | null>,
   minimized: boolean,
   // anything that can move the dock's spots, like other windows minimizing
   layout: unknown,
 ) {
-  // the thumbnail's scale once it's sat in the dock, for the app badge
-  const [scale, setScale] = useState<number | null>(null);
-  // restoring: still above the dock and not clickable until it's out
-  const [lifting, setLifting] = useState(false);
-  const was = useRef(minimized);
-  const running = useRef(0);
-
-  useLayoutEffect(() => {
-    const frame = frameRef.current;
-    const before = was.current;
-    was.current = minimized;
-    if (!frame || before === minimized) return;
-    cancelAnimationFrame(running.current);
-    running.current = 0;
-    setScale(null);
-    const at = geometry(frame, id);
-
-    if (minimized) {
-      // no dock spot, like on phones: just gone
-      if (!at) {
-        frame.style.transform = "scale(0)";
-        return;
-      }
-      play(frame, at, 0, 1, running, () => setScale(at.scale));
-    } else {
-      if (!at) {
-        frame.style.transform = "";
-        return;
-      }
-      setLifting(true);
-      play(frame, at, 1, 0, running, () => {
-        frame.style.transform = "";
-        setLifting(false);
-      });
-    }
-  }, [id, frameRef, minimized]);
+  const [thumb, setThumb] = useState<Thumbnail | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: layout is only a trigger
   useLayoutEffect(() => {
-    const frame = frameRef.current;
-    if (!minimized || !frame) return;
+    if (!minimized) {
+      setThumb(null);
+      return;
+    }
     function place() {
-      // mid-genie it ends in the right spot anyway
-      if (!frame || running.current) return;
-      const at = geometry(frame, id);
-      if (!at) return;
-      frame.style.transform = genieTransform(at.from, at.to, 1);
-      setScale(at.scale);
+      const frame = frameRef.current;
+      const slot = document.querySelector(
+        `[data-dock-slot="${CSS.escape(id)}"]`,
+      );
+      if (!frame || !slot) return;
+      const to = slot.getBoundingClientRect();
+      // offset sizes ignore transforms, so this is the window at full size
+      const w = frame.offsetWidth;
+      const h = frame.offsetHeight;
+      const scale = Math.min(to.width / w, to.height / h);
+      const x = to.left + (to.width - w * scale) / 2 - frame.offsetLeft;
+      const y = to.top + (to.height - h * scale) / 2 - frame.offsetTop;
+      setThumb({ transform: `translate(${x}px, ${y}px) scale(${scale})`, scale });
     }
     place();
     const dock = document.querySelector("[data-dock]");
@@ -123,61 +96,22 @@ function useMinimize(
     };
   }, [id, frameRef, minimized, layout]);
 
-  useLayoutEffect(() => () => cancelAnimationFrame(running.current), []);
-
-  return { scale, lifting };
+  return thumb;
 }
 
-// the window at full size and the thumbnail it shrinks to in its dock spot
-function geometry(frame: HTMLElement, id: string) {
-  const slot = document.querySelector(`[data-dock-slot="${CSS.escape(id)}"]`);
-  if (!slot) return null;
-  const spot = slot.getBoundingClientRect();
-  // offset sizes ignore transforms, so this is where the window really sits
-  const from: Box = {
-    x: frame.offsetLeft,
-    y: frame.offsetTop,
-    w: frame.offsetWidth,
-    h: frame.offsetHeight,
-  };
-  const to = fitIn(from, {
-    x: spot.left,
-    y: spot.top,
-    w: spot.width,
-    h: spot.height,
-  });
-  return { from, to, scale: to.w / from.w };
-}
-
-// the genie from progress `start` to `end`, a frame at a time
-function play(
-  frame: HTMLElement,
-  at: { from: Box; to: Box },
-  start: number,
-  end: number,
-  running: RefObject<number>,
-  done: () => void,
-) {
-  const step = (p: number) => {
-    frame.style.transform = genieTransform(at.from, at.to, p);
-  };
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    step(end);
-    return done();
-  }
-  // the first frame now, so nothing flashes before the animation picks up
-  step(start);
-  const began = performance.now();
-  const tick = (now: number) => {
-    const t = Math.min(1, (now - began) / GENIE_MS);
-    step(start + (end - start) * t);
-    if (t < 1) running.current = requestAnimationFrame(tick);
-    else {
-      running.current = 0;
-      done();
-    }
-  };
-  running.current = requestAnimationFrame(tick);
+// the window buttons and double-click snap to full screen and back. every
+// transition on the page is off for the frame the change lands in, so the frame,
+// the browser's padding, the dimmed strip and the dock all jump together.
+// scrolling into the browser's page still eases, see browser-store
+function snapZoom(id: string) {
+  const root = document.documentElement;
+  root.dataset.snap = "";
+  toggleZoom(id);
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      delete root.dataset.snap;
+    }),
+  );
 }
 
 // a window's four edges, so every move between placed, css-placed and zoomed is
@@ -225,12 +159,7 @@ export function AppWindow({
   const state = useWindows();
   const win = state.windows[id];
   const frameRef = useRef<HTMLElement>(null);
-  const { scale, lifting } = useMinimize(
-    id,
-    frameRef,
-    !!win?.minimized,
-    state,
-  );
+  const thumb = useThumbnail(id, frameRef, !!win?.minimized, state);
   const dockHidden = useDockHidden();
   if (!win) return null;
   const focused = topmost(state) === id;
@@ -310,7 +239,7 @@ export function AppWindow({
       target.closest("[data-window-drag]") &&
       !target.closest(NOT_DRAG)
     )
-      toggleZoom(id);
+      snapZoom(id);
   }
 
   return (
@@ -320,33 +249,35 @@ export function AppWindow({
         aria-label={label}
         // minimized windows stay mounted, so they come back as they were and can
         // be their own thumbnail. clicks go through to the dock spot under them
-        inert={win.minimized || lifting}
+        inert={win.minimized}
         onPointerDown={onPointerDown}
         onDoubleClick={onDoubleClick}
         style={{
           ...edges(win),
-          zIndex: win.minimized || lifting ? MINIMIZED_Z : BASE_Z + below,
+          zIndex: win.minimized ? MINIMIZED_Z : BASE_Z + below,
+          transform: win.minimized ? thumb?.transform : undefined,
         }}
         // all placement is md and up. on phones it's a plain block in the page
-        className={`md:fixed md:top-(--top) md:right-(--right) md:bottom-(--bottom) md:left-(--left) md:flex md:origin-top-left md:flex-col md:overflow-hidden md:transition-[top,right,bottom,left,border-radius,opacity] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! md:data-dragging:transition-none! ${
+        className={`md:fixed md:top-(--top) md:right-(--right) md:bottom-(--bottom) md:left-(--left) md:flex md:origin-top-left md:flex-col md:overflow-hidden md:transition-[top,right,bottom,left,border-radius] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! md:data-dragging:transition-none! ${
           win.zoomed
             ? "md:rounded-none"
             : "md:rounded-xl md:shadow-2xl md:ring-1 md:ring-black/10"
         } ${
-          win.minimized || lifting
-            ? // tucked away with the dock while the browser fills the screen
-              `pointer-events-none ${win.minimized && dockHidden ? "opacity-0" : ""}`
+          win.minimized
+            ? // no spot to go to yet, or tucked away with the dock while the
+              // browser fills the screen
+              `pointer-events-none ${!thumb || dockHidden ? "invisible" : ""}`
             : ""
         } ${className}`}
       >
         {children}
-        {win.minimized && scale && (
+        {win.minimized && thumb && (
           // the app's icon in the thumbnail's corner, scaled back up to dock size
           <img
             src={appOf(id).icon}
             alt=""
-            className="dock-badge pointer-events-none absolute right-0 bottom-0 size-3 origin-bottom-right"
-            style={{ transform: `scale(${1 / scale})` }}
+            className="pointer-events-none absolute right-0 bottom-0 size-3 origin-bottom-right"
+            style={{ transform: `scale(${1 / thumb.scale})` }}
           />
         )}
       </section>
@@ -386,7 +317,7 @@ export function TrafficLights() {
         color="bg-[#28c840]"
         hover="group-hover:bg-[#28c840]"
         lit={focused}
-        onClick={() => toggleZoom(id)}
+        onClick={() => snapZoom(id)}
       >
         <Plus strokeWidth={3} />
       </Light>
