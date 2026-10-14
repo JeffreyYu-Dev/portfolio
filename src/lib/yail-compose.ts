@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { Draft } from "#/lib/mail-store";
+import { type Draft, flushDraft, getMail, newDraft } from "#/lib/mail-store";
 
 // gmail's floating new message window. module state, so it stays open while the
 // visitor moves between yail pages. the text itself lives in mail-store's draft
@@ -20,6 +20,13 @@ export const getCompose = () => state;
 // a new key remounts the form, so a reply opened over another message starts fresh
 export function openCompose(draft: Draft) {
   set({ mode: "open", initial: draft, key: state.key + 1 });
+}
+
+// opens the visitor's draft, or a new one. flushes first: a save still waiting
+// holds the last half second of typing, which a fresh form would otherwise drop
+export function openDraft(overrides: Partial<Draft> = {}) {
+  flushDraft();
+  openCompose({ ...(getMail().draft ?? newDraft()), ...overrides });
 }
 
 function mode(next: ComposeMode) {

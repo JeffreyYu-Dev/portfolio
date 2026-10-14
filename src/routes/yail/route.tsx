@@ -3,9 +3,8 @@ import { Rail } from "#/components/yail/rail";
 import { SentToast } from "#/components/yail/sent-toast";
 import { TopBar } from "#/components/yail/top-bar";
 import { useBrowser } from "#/lib/browser-store";
-import { getMail, newDraft } from "#/lib/mail-store";
 import { usePageEnter } from "#/lib/page-transition";
-import { closeCompose, openCompose } from "#/lib/yail-compose";
+import { closeCompose, openDraft } from "#/lib/yail-compose";
 import {
   createFileRoute,
   Outlet,
@@ -35,7 +34,7 @@ function Yail() {
   });
   useEffect(() => {
     if (!wantsCompose) return;
-    openCompose(getMail().draft ?? newDraft());
+    openDraft();
     router.navigate({ href: pathname, replace: true });
   }, [wantsCompose, pathname, router]);
 

@@ -1,18 +1,15 @@
 import { Avatar } from "#/components/yail/avatar";
+import { MailTime } from "#/components/yail/mail-time";
 import { type Piece, paragraphs } from "#/lib/mail-body";
-import { getMail, newDraft, toggleStar } from "#/lib/mail-store";
+import { toggleStar } from "#/lib/mail-store";
 import type { Box, Item } from "#/lib/yail";
-import { openCompose } from "#/lib/yail-compose";
+import { openDraft } from "#/lib/yail-compose";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Reply, Star } from "lucide-react";
 
 export function MessageView({ item, backTo }: { item: Item; backTo: Box }) {
   const sent = item.box === "sent";
-  const reply = () =>
-    openCompose({
-      ...(getMail().draft ?? newDraft()),
-      subject: `Re: ${item.subject}`,
-    });
+  const reply = () => openDraft({ subject: `Re: ${item.subject}` });
 
   return (
     <article className="px-4 pb-10">
@@ -44,7 +41,7 @@ export function MessageView({ item, backTo }: { item: Item; backTo: Box }) {
           </p>
         </div>
         <span className="shrink-0 text-xs text-[#5f6368]">
-          {new Date(item.date).toLocaleString()}
+          <MailTime iso={item.date} full />
         </span>
         <button
           type="button"

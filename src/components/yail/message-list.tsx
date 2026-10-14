@@ -1,8 +1,8 @@
 import type { MailTab } from "#/data/mail";
-import { mailDate } from "#/lib/mail-date";
-import { getMail, toggleStar, useMail } from "#/lib/mail-store";
+import { toggleStar, useMail } from "#/lib/mail-store";
 import { type Box, type Item, unreadByTab } from "#/lib/yail";
-import { openCompose } from "#/lib/yail-compose";
+import { openDraft } from "#/lib/yail-compose";
+import { MailTime } from "#/components/yail/mail-time";
 import { Link } from "@tanstack/react-router";
 import { Inbox, Star, Tag, Users } from "lucide-react";
 
@@ -88,10 +88,7 @@ export function MessageList({
           {item.box === "drafts" ? (
             <button
               type="button"
-              onClick={() => {
-                const draft = getMail().draft;
-                if (draft) openCompose(draft);
-              }}
+              onClick={() => openDraft()}
               className="flex min-w-0 flex-1 items-center gap-4 py-2.5 pr-4 pl-12 text-left"
             >
               <Row item={item} />
@@ -124,7 +121,7 @@ function Row({ item }: { item: Item }) {
           {item.from}
         </span>
         <span className={`shrink-0 text-xs md:hidden ${weight}`}>
-          {mailDate(item.date)}
+          <MailTime iso={item.date} />
         </span>
       </span>
       <span className="min-w-0 flex-1 truncate">
@@ -135,7 +132,7 @@ function Row({ item }: { item: Item }) {
         </span>
       </span>
       <span className={`shrink-0 text-xs max-md:hidden ${weight}`}>
-        {mailDate(item.date)}
+        <MailTime iso={item.date} />
       </span>
     </span>
   );

@@ -2,7 +2,7 @@ import { MessageView } from "#/components/yail/message-view";
 import { NotFound } from "#/components/yail/not-found";
 import { getMail, markRead, useMail, useMailReady } from "#/lib/mail-store";
 import { findItem, isBox } from "#/lib/yail";
-import { openCompose } from "#/lib/yail-compose";
+import { openDraft } from "#/lib/yail-compose";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
@@ -20,8 +20,7 @@ function Email() {
   // yail.com/drafts/draft opens the draft in compose over the drafts list
   useEffect(() => {
     if (box !== "drafts" || !ready) return;
-    const draft = getMail().draft;
-    if (draft) openCompose(draft);
+    if (getMail().draft) openDraft();
     navigate({ to: "/yail/$box", params: { box: "drafts" }, replace: true });
   }, [box, ready, navigate]);
 

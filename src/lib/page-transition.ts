@@ -2,7 +2,7 @@ import { useRouter, useRouterState } from "@tanstack/react-router";
 import gsap from "gsap";
 import { type MouseEvent, useLayoutEffect } from "react";
 import { afterBoot } from "#/lib/boot";
-import { samePath } from "#/lib/browser-address";
+import { samePath, sameSite } from "#/lib/browser-address";
 import { type Activity, announce } from "#/lib/live-activity";
 
 // masked line reveal between pages, all in one continuous motion:
@@ -120,9 +120,21 @@ export function useLeave(key: string, activity?: Activity) {
 // remounts, so clicking the current page does nothing instead
 export function useGo(key: string) {
   const leave = useLeave(key);
+  const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  return (path: string) => (e: MouseEvent<HTMLAnchorElement>) =>
-    samePath(pathname, path) ? e.preventDefault() : leave(e);
+  return (path: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (samePath(pathname, path)) return e.preventDefault();
+    // within one hosted site (yail) the layout never remounts to reveal the page
+    // again, so it just navigates, like the site's own links do
+    if (sameSite(pathname, path)) {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+        return;
+      e.preventDefault();
+      router.navigate({ href: path });
+      return;
+    }
+    leave(e);
+  };
 }
 
 // call once per page: reveals its lines and flies in matching morph elements

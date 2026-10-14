@@ -1,6 +1,6 @@
-import { getMail, newDraft, useMail } from "#/lib/mail-store";
+import { useMail } from "#/lib/mail-store";
 import { type Box, boxTitle, unreadByTab } from "#/lib/yail";
-import { openCompose } from "#/lib/yail-compose";
+import { openDraft } from "#/lib/yail-compose";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { File, Inbox, Pencil, Send, Star } from "lucide-react";
 
@@ -37,7 +37,7 @@ export function Rail({ open, onClose }: { open: boolean; onClose: () => void }) 
           type="button"
           onClick={() => {
             onClose();
-            openCompose(getMail().draft ?? newDraft());
+            openDraft();
           }}
           className="mb-3 ml-2 flex h-14 w-36 items-center gap-3 rounded-2xl bg-[#c2e7ff] px-5 font-medium text-[#001d35] hover:shadow-md"
         >

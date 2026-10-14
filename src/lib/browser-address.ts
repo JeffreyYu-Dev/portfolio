@@ -38,6 +38,13 @@ export function samePath(a: string, b: string) {
   return normalizePath(a) === normalizePath(b);
 }
 
+// two pages of one hosted site, like yail's inbox and starred. they share a
+// layout that doesn't remount between them
+export function sameSite(a: string, b: string) {
+  const site = hostedFor(normalizePath(a.split(/[?#]/)[0]));
+  return !!site && site === hostedFor(normalizePath(b.split(/[?#]/)[0]));
+}
+
 // normalizes the path part and keeps any ?query or #hash as typed
 function routeTo(path: string) {
   const at = path.search(/[?#]/);

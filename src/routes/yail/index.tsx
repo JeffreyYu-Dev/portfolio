@@ -1,7 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/yail/")({
-  beforeLoad: () => {
-    throw redirect({ to: "/yail/$box", params: { box: "inbox" } });
+  // keeps the query, so yail.com?compose=1 still arrives with compose open
+  beforeLoad: ({ location }) => {
+    throw redirect({ href: `/yail/inbox${location.searchStr}` });
   },
 });

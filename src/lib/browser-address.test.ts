@@ -5,6 +5,7 @@ import {
   normalizePath,
   parseAddress,
   samePath,
+  sameSite,
 } from "#/lib/browser-address";
 
 describe("displayAddress", () => {
@@ -111,5 +112,17 @@ describe("yail.com", () => {
       kind: "external",
       url: "https://notyail.com",
     });
+  });
+});
+
+describe("sameSite", () => {
+  it("is true for two pages inside one hosted site", () => {
+    expect(sameSite("/yail/inbox", "/yail/starred")).toBe(true);
+    expect(sameSite("/yail", "/yail/search?q=a")).toBe(true);
+  });
+  it("is false across sites or for the portfolio's own pages", () => {
+    expect(sameSite("/", "/yail/inbox")).toBe(false);
+    expect(sameSite("/yail/inbox", "/about")).toBe(false);
+    expect(sameSite("/about", "/projects/renao")).toBe(false);
   });
 });

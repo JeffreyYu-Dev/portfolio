@@ -50,3 +50,28 @@ describe("compose window", () => {
     });
   });
 });
+
+describe("openDraft", () => {
+  it("opens with text typed moments ago, not the last saved draft", async () => {
+    const storage = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => storage.get(k) ?? null,
+      setItem: (k: string, v: string) => storage.set(k, v),
+    });
+    const store = await import("#/lib/mail-store");
+    store.saveDraft({ ...store.newDraft(1), body: "thanks" });
+    store.flushDraft();
+    // still inside the 500ms save delay
+    store.saveDraft({ ...store.newDraft(1), body: "thanks!!" });
+    compose.openDraft({ subject: "Re: hi" });
+    expect(compose.getCompose().initial).toMatchObject({
+      body: "thanks!!",
+      subject: "Re: hi",
+    });
+    vi.unstubAllGlobals();
+  });
+  it("starts a new draft when there isn't one", () => {
+    compose.openDraft();
+    expect(compose.getCompose().initial).toMatchObject({ body: "", subject: "" });
+  });
+});
