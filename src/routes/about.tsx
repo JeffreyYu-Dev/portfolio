@@ -20,7 +20,7 @@ function About() {
           </Link>
         </Line>
       </header>
-      <main className="mt-4 flex flex-col gap-4">
+      {/*<main className="mt-4 flex flex-col gap-4">
         <section>
           <Line>
             <h1 className="text-lg">About me</h1>
@@ -61,7 +61,8 @@ function About() {
             <p className="mt-1 text-sm">{about.interests.join(" · ")}</p>
           </Line>
         </section>
-      </main>
+      </main>*/}
+      <main>under construction</main>
     </>
   );
 }
