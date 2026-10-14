@@ -76,6 +76,20 @@ export function focused(state: WindowsState, id: string): WindowsState {
   return { ...patched(state, id, () => ({ z: top })), top };
 }
 
+// where a window of width `w` may sit. shared with the live drag, so letting go
+// doesn't make it jump
+export function clampedPosition(
+  w: number,
+  x: number,
+  y: number,
+  bounds: Bounds,
+) {
+  return {
+    x: Math.min(Math.max(x, KEEP_X - w), bounds.width - KEEP_X),
+    y: Math.min(Math.max(y, MENU_BAR), bounds.height - KEEP_Y),
+  };
+}
+
 export function moved(
   state: WindowsState,
   id: string,
@@ -83,10 +97,7 @@ export function moved(
   y: number,
   bounds: Bounds,
 ): WindowsState {
-  return patched(state, id, (win) => ({
-    x: Math.min(Math.max(x, KEEP_X - win.w), bounds.width - KEEP_X),
-    y: Math.min(Math.max(y, MENU_BAR), bounds.height - KEEP_Y),
-  }));
+  return patched(state, id, (win) => clampedPosition(win.w, x, y, bounds));
 }
 
 export function minimized(state: WindowsState, id: string): WindowsState {
@@ -156,7 +167,7 @@ function set(next: WindowsState) {
   for (const listener of listeners) listener();
 }
 
-function screen(): Bounds {
+export function screen(): Bounds {
   return { width: window.innerWidth, height: window.innerHeight };
 }
 
