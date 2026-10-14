@@ -1,12 +1,12 @@
+import { BROWSER, windowsState, zoomWindow } from "#/lib/window-store";
 import { useSyncExternalStore } from "react";
 
-// whether the browser has grown to fill the screen, and zen's sidebar. scrolling
-// into a page expands it, which tucks the sidebar away like zen's compact mode
+// zen's sidebar. the browser filling the screen is its window zooming, which
+// scrolling into a page does too. full screen keeps its own sidebar setting and
+// starts with it tucked away, like zen's compact mode
 export type BrowserState = {
-  expanded: boolean;
   sidebar: boolean;
-  // the sidebar as it was before expanding, put back on shrinking
-  sidebarBefore: boolean | null;
+  sidebarZoomed: boolean;
 };
 
 // px scrolled before it expands. it only shrinks again right at the top, so
@@ -14,9 +14,8 @@ export type BrowserState = {
 export const EXPAND_AT = 40;
 
 export const initialBrowser: BrowserState = {
-  expanded: false,
   sidebar: true,
-  sidebarBefore: null,
+  sidebarZoomed: false,
 };
 
 export function nextExpanded(isExpanded: boolean, scrollTop: number) {
@@ -39,22 +38,18 @@ export function wheelExpanded(
   return isExpanded;
 }
 
-export function expanded(state: BrowserState): BrowserState {
-  if (state.expanded) return state;
-  return { expanded: true, sidebar: false, sidebarBefore: state.sidebar };
+export function sidebarShown(state: BrowserState, zoomed: boolean) {
+  return zoomed ? state.sidebarZoomed : state.sidebar;
 }
 
-export function shrunk(state: BrowserState): BrowserState {
-  if (!state.expanded) return state;
-  return {
-    expanded: false,
-    sidebar: state.sidebarBefore ?? state.sidebar,
-    sidebarBefore: null,
-  };
-}
-
-export function toggledSidebar(state: BrowserState): BrowserState {
-  return { ...state, sidebar: !state.sidebar };
+// flips the setting for the size the window is at, leaving the other alone
+export function toggledSidebar(
+  state: BrowserState,
+  zoomed: boolean,
+): BrowserState {
+  return zoomed
+    ? { ...state, sidebarZoomed: !state.sidebarZoomed }
+    : { ...state, sidebar: !state.sidebar };
 }
 
 let state = initialBrowser;
@@ -66,20 +61,22 @@ function set(next: BrowserState) {
   for (const listener of listeners) listener();
 }
 
+function browserZoomed() {
+  return windowsState().windows[BROWSER]?.zoomed ?? false;
+}
+
 // called from the page's scroll handler
 export function scrolledTo(scrollTop: number) {
-  const want = nextExpanded(state.expanded, scrollTop);
-  set(want ? expanded(state) : shrunk(state));
+  zoomWindow(BROWSER, nextExpanded(browserZoomed(), scrollTop));
 }
 
 // called from the page's wheel handler
 export function wheeled(deltaY: number, scrollTop: number) {
-  const want = wheelExpanded(state.expanded, deltaY, scrollTop);
-  set(want ? expanded(state) : shrunk(state));
+  zoomWindow(BROWSER, wheelExpanded(browserZoomed(), deltaY, scrollTop));
 }
 
 export function toggleSidebar() {
-  set(toggledSidebar(state));
+  set(toggledSidebar(state, browserZoomed()));
 }
 
 export function useBrowser() {
@@ -91,7 +88,6 @@ export function useBrowser() {
       };
     },
     () => state,
-    // the server always renders the window at its normal size
     () => initialBrowser,
   );
 }

@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   EXPAND_AT,
-  expanded,
   initialBrowser,
   nextExpanded,
-  wheelExpanded,
-  shrunk,
+  sidebarShown,
   toggledSidebar,
+  wheelExpanded,
 } from "#/lib/browser-store";
 
 describe("nextExpanded", () => {
@@ -24,33 +23,16 @@ describe("nextExpanded", () => {
   });
 });
 
-describe("expanding and the sidebar", () => {
-  it("starts shrunk with the sidebar open", () => {
-    expect(initialBrowser).toEqual({
-      expanded: false,
-      sidebar: true,
-      sidebarBefore: null,
-    });
+describe("the sidebar", () => {
+  it("shows beside the page and starts tucked away in full screen", () => {
+    expect(sidebarShown(initialBrowser, false)).toBe(true);
+    expect(sidebarShown(initialBrowser, true)).toBe(false);
   });
-  it("collapses the sidebar on expand and restores it on shrink", () => {
-    const big = expanded(initialBrowser);
-    expect(big).toMatchObject({ expanded: true, sidebar: false });
-    expect(shrunk(big)).toEqual(initialBrowser);
-  });
-  it("keeps a closed sidebar closed after shrinking", () => {
-    const closed = toggledSidebar(initialBrowser);
-    expect(shrunk(expanded(closed)).sidebar).toBe(false);
-  });
-  it("lets the sidebar open while expanded, then restores the earlier state", () => {
-    const closed = toggledSidebar(initialBrowser);
-    const big = toggledSidebar(expanded(closed));
-    expect(big.sidebar).toBe(true);
-    expect(shrunk(big).sidebar).toBe(false);
-  });
-  it("does nothing when already in that mode", () => {
-    const big = expanded(initialBrowser);
-    expect(expanded(big)).toBe(big);
-    expect(shrunk(initialBrowser)).toBe(initialBrowser);
+  it("keeps a setting per size, so going back restores the earlier one", () => {
+    const closed = toggledSidebar(initialBrowser, false);
+    const openBig = toggledSidebar(closed, true);
+    expect(sidebarShown(openBig, true)).toBe(true);
+    expect(sidebarShown(openBig, false)).toBe(false);
   });
 });
 

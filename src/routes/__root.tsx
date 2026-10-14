@@ -5,6 +5,7 @@ import {
   createRootRoute,
   useRouterState,
 } from "@tanstack/react-router";
+import { WindowLayer } from "#/components/app-window";
 import { Boot } from "#/components/boot";
 import { Browser } from "#/components/browser";
 import { Desktop } from "#/components/desktop";
@@ -50,20 +51,22 @@ function RootLayout() {
       <Notch />
       <Dock />
       <Desktop>
-        <Browser>
-          {/* data-page: what page-transition.ts snapshots when leaving. yail is a
-              whole web app, so it gets the full card instead of the page column */}
-          <div
-            data-page
-            className={
-              pathname === "/yail" || pathname.startsWith("/yail/")
-                ? "min-h-dvh md:h-full md:min-h-0"
-                : "mx-auto w-md pt-20 md:py-12"
-            }
-          >
-            <Outlet />
-          </div>
-        </Browser>
+        <WindowLayer>
+          <Browser>
+            {/* data-page: what page-transition.ts snapshots when leaving. yail is a
+                whole web app, so it gets the full card instead of the page column */}
+            <div
+              data-page
+              className={
+                pathname === "/yail" || pathname.startsWith("/yail/")
+                  ? "min-h-dvh md:h-full md:min-h-0"
+                  : "mx-auto w-md pt-20 md:py-12"
+              }
+            >
+              <Outlet />
+            </div>
+          </Browser>
+        </WindowLayer>
       </Desktop>
     </>
   );

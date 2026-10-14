@@ -1,7 +1,7 @@
 import { useNowPlaying } from "#/components/notch-player";
-import { useBrowser } from "#/lib/browser-store";
 import { toggleNotch } from "#/lib/notch-store";
 import { useGo } from "#/lib/page-transition";
+import { BROWSER, openWindow, useWindows } from "#/lib/window-store";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
@@ -9,7 +9,9 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 export function Dock() {
   const track = useNowPlaying();
   const go = useGo("dock");
-  const { expanded } = useBrowser();
+  const browser = useWindows().windows[BROWSER];
+  // the browser filling the screen tucks the dock away, like a full-screen mac app
+  const expanded = browser?.zoomed ?? false;
   // pushing the mouse to the bottom edge brings it back while it's tucked away
   const [peek, setPeek] = useState(false);
   const hidden = expanded && !peek;
@@ -49,9 +51,19 @@ export function Dock() {
           // dots. the radius is the icons' corner plus the padding, so the curves nest
           className="flex items-center gap-1.5 rounded-xl border border-white/40 bg-white/25 p-1.5 pb-2.5 shadow-[0_8px_30px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.5)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150"
         >
-          {/* the portfolio lives in the browser, so it's always running */}
-          <Item label="Zen" running>
-            <Link to="/" onClick={go("/")} aria-label="Zen" className={tile}>
+          {/* the portfolio lives in the browser. closed or minimized, clicking it
+              brings the window back on the page it was showing. otherwise it goes home */}
+          <Item label="Zen" running={!!browser}>
+            <Link
+              to="/"
+              onClick={(e) => {
+                if (browser && !browser.minimized) return go("/")(e);
+                e.preventDefault();
+                openWindow(BROWSER);
+              }}
+              aria-label="Zen"
+              className={tile}
+            >
               <img src="/zen-browser.png" alt="" className="size-full" />
             </Link>
           </Item>

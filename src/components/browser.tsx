@@ -1,3 +1,4 @@
+import { AppWindow, TrafficLights } from "#/components/app-window";
 import { GitHub, LinkedIn } from "#/components/brand-icons";
 import { socials } from "#/data/socials";
 import {
@@ -25,10 +26,12 @@ import {
 import { furthestEntry } from "#/lib/browser-history";
 import {
   scrolledTo,
+  sidebarShown,
   toggleSidebar,
   useBrowser,
   wheeled,
 } from "#/lib/browser-store";
+import { BROWSER, useWindows } from "#/lib/window-store";
 import { useGo } from "#/lib/page-transition";
 import {
   useCanGoBack,
@@ -62,12 +65,22 @@ import {
 
 // the portfolio's window, styled after zen browser's multiple toolbars layout: a
 // tinted frame with tabs down a left sidebar, a toolbar with the address bar
-// across the top, and the page in a rounded card. scrolling into a page grows it
-// to fill the screen. on phones and small tablets the frame, sidebar and toolbar
-// drop away and the card is the whole page
+// across the top, and the page in a rounded card. scrolling into a page zooms it
+// to fill the screen, the same as its green button. drag it by the toolbar. on
+// phones and small tablets the frame, sidebar and toolbar drop away and the card
+// is the whole page
 export function Browser({ children }: { children: ReactNode }) {
+  return (
+    <AppWindow id={BROWSER} label="Zen">
+      <Frame>{children}</Frame>
+    </AppWindow>
+  );
+}
+
+function Frame({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { expanded, sidebar } = useBrowser();
+  const expanded = useWindows().windows[BROWSER]?.zoomed ?? false;
+  const sidebar = sidebarShown(useBrowser(), expanded);
   // the collapsed sidebar sliding out over the page, like zen's compact mode
   const [peek, setPeek] = useState(false);
   const shown = sidebar || peek;
@@ -80,10 +93,13 @@ export function Browser({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className={`relative h-full md:flex md:flex-col md:overflow-hidden md:border md:bg-gradient-to-br md:from-rose-200/60 md:via-violet-200/60 md:to-sky-200/60 md:backdrop-blur-2xl md:transition-[padding,border-radius,border-color,box-shadow] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! ${
+      // the window itself brings the corners and shadow. like zen, the frame's empty
+      // space, toolbar and sidebar included, drags it. the page doesn't
+      data-window-drag
+      className={`relative h-full md:flex md:flex-col md:overflow-hidden md:border md:bg-gradient-to-br md:from-rose-200/60 md:via-violet-200/60 md:to-sky-200/60 md:backdrop-blur-2xl md:transition-[padding,border-color] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! ${
         expanded
-          ? "md:rounded-none md:border-transparent md:p-0 md:shadow-none"
-          : "md:rounded-xl md:border-white/30 md:px-2 md:pt-1 md:pb-2 md:shadow-2xl md:ring-1 md:ring-black/10"
+          ? "md:border-transparent md:p-0"
+          : "md:rounded-xl md:border-white/30 md:px-2 md:pt-1 md:pb-2"
       }`}
     >
       <Toolbar pathname={pathname} sidebar={sidebar} expanded={expanded} />
@@ -121,6 +137,7 @@ export function Browser({ children }: { children: ReactNode }) {
           outside the scroller so it doesn't scroll with the content */}
         <div
           data-ghost-host
+          data-no-drag
           className={`relative isolate flex-1 bg-white md:min-w-0 md:overflow-hidden md:shadow-sm md:transition-[border-radius] md:duration-[400ms] md:motion-reduce:transition-none! ${
             expanded
               ? "md:rounded-none"
@@ -422,17 +439,6 @@ function Favicon({ path }: { path: string }) {
   );
 }
 
-// decorative for now, the window manager wires them up later
-function TrafficLights() {
-  return (
-    <div aria-hidden="true" className="flex gap-1.5">
-      <span className="size-3 rounded-full bg-[#ff5f57] ring-1 ring-black/10 ring-inset" />
-      <span className="size-3 rounded-full bg-[#febc2e] ring-1 ring-black/10 ring-inset" />
-      <span className="size-3 rounded-full bg-[#28c840] ring-1 ring-black/10 ring-inset" />
-    </div>
-  );
-}
-
 function NavButton({
   label,
   disabled,
@@ -480,6 +486,8 @@ function AddressBar({ pathname }: { pathname: string }) {
   return (
     <form
       onSubmit={submit}
+      // the field's padding is part of the field, not something to drag by
+      data-no-drag
       className="flex h-8 min-w-0 flex-1 items-center gap-1 rounded-lg bg-white/50 pr-3 pl-1 ring-1 ring-black/5 focus-within:bg-white/80"
     >
       <CopyAddress />

@@ -9,6 +9,8 @@ import {
   toggleZoom,
   topmost,
   useWindows,
+  type Rect,
+  type Win,
 } from "#/lib/window-store";
 import { Minus, Plus, X } from "lucide-react";
 import {
@@ -26,13 +28,47 @@ import {
 const NOT_DRAG = "button, a, input, textarea, select, [data-no-drag]";
 // px a press has to travel before it counts as a drag
 const DRAG_FROM = 3;
+// tailwind's md, where the desktop starts
+const DESKTOP = "(min-width: 48rem)";
 
 const Current = createContext<{ id: string; focused: boolean } | null>(null);
 
 // windows stack among themselves in here, always under the dock and the notch
-// however high their focus order climbs
+// however high their focus order climbs. on phones there's no desktop: the
+// browser is the page, and other apps hide themselves
 export function WindowLayer({ children }: { children: ReactNode }) {
-  return <div className="relative z-30 max-md:hidden">{children}</div>;
+  return <div className="md:relative md:z-30">{children}</div>;
+}
+
+// a window's four edges, so every move between placed, css-placed and zoomed is
+// the same four values changing and can ease between them
+function edges(win: Win): CSSProperties {
+  if (win.zoomed)
+    return edgeVars("0px", `${MENU_BAR}px`, "0px", "0px");
+  if (!win.rect)
+    // clear of the notch and the dock, at most 72rem wide and centred
+    return edgeVars(CENTRED, "3rem", CENTRED, "4rem");
+  return rectVars(win.rect);
+}
+
+const CENTRED = "max(2.5rem, calc((100% - 72rem) / 2))";
+
+function rectVars({ x, y, w, h }: Rect) {
+  return edgeVars(
+    `${x}px`,
+    `${y}px`,
+    `calc(100% - ${x + w}px)`,
+    `calc(100% - ${y + h}px)`,
+  );
+}
+
+function edgeVars(left: string, top: string, right: string, bottom: string) {
+  return {
+    "--left": left,
+    "--top": top,
+    "--right": right,
+    "--bottom": bottom,
+  } as CSSProperties;
 }
 
 export function AppWindow({
@@ -58,6 +94,8 @@ export function AppWindow({
       !win ||
       win.zoomed ||
       e.button !== 0 ||
+      // on phones the windows are plain pages, with nothing to drag
+      !matchMedia(DESKTOP).matches ||
       !(target instanceof Element) ||
       !target.closest("[data-window-drag]") ||
       target.closest(NOT_DRAG)
@@ -67,12 +105,13 @@ export function AppWindow({
     // stop the press from selecting text as it drags
     e.preventDefault();
     const frame = e.currentTarget;
-    const offsetX = e.clientX - win.x;
-    const offsetY = e.clientY - win.y;
+    // measured, since a window css placed has no rect yet
+    const box = frame.getBoundingClientRect();
+    const start = { x: box.left, y: box.top, w: box.width, h: box.height };
     const startX = e.clientX;
     const startY = e.clientY;
     const bounds = screen();
-    let at = { x: win.x, y: win.y };
+    let at = start;
     let dragging = false;
 
     // the frame follows the pointer by itself and the store hears about it once,
@@ -85,22 +124,29 @@ export function AppWindow({
           return;
         dragging = true;
         frame.setPointerCapture(ev.pointerId);
+        // the edges ease when zooming, but a drag has to stick to the pointer
+        frame.dataset.dragging = "";
       }
-      at = clampedPosition(
-        win.w,
-        ev.clientX - offsetX,
-        ev.clientY - offsetY,
-        bounds,
-      );
-      frame.style.left = `${at.x}px`;
-      frame.style.top = `${at.y}px`;
+      at = {
+        ...start,
+        ...clampedPosition(
+          start.w,
+          start.x + ev.clientX - startX,
+          start.y + ev.clientY - startY,
+          bounds,
+        ),
+      };
+      for (const [name, value] of Object.entries(rectVars(at)))
+        frame.style.setProperty(name, value);
     }
     // on window, so letting go outside the frame before the drag starts still ends it
     function end() {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", end);
-      if (dragging) moveWindow(id, at.x, at.y);
+      if (!dragging) return;
+      moveWindow(id, at);
+      delete frame.dataset.dragging;
     }
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end);
@@ -117,11 +163,6 @@ export function AppWindow({
       toggleZoom(id);
   }
 
-  // zoomed fills the desktop below the notch strip. the saved spot is kept for later
-  const place: CSSProperties = win.zoomed
-    ? { left: 0, top: MENU_BAR, right: 0, bottom: 0 }
-    : { left: win.x, top: win.y, width: win.w, height: win.h };
-
   return (
     <Current.Provider value={{ id, focused }}>
       <section
@@ -131,9 +172,12 @@ export function AppWindow({
         inert={win.minimized}
         onPointerDown={onPointerDown}
         onDoubleClick={onDoubleClick}
-        style={{ ...place, zIndex: win.z }}
-        className={`fixed flex flex-col overflow-hidden ${
-          win.zoomed ? "" : "rounded-xl shadow-2xl ring-1 ring-black/10"
+        style={{ ...edges(win), zIndex: win.z }}
+        // all placement is md and up. on phones it's a plain block in the page
+        className={`md:fixed md:top-(--top) md:right-(--right) md:bottom-(--bottom) md:left-(--left) md:flex md:flex-col md:overflow-hidden md:transition-[top,right,bottom,left,border-radius] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! md:data-dragging:transition-none! ${
+          win.zoomed
+            ? "md:rounded-none"
+            : "md:rounded-xl md:shadow-2xl md:ring-1 md:ring-black/10"
         } ${className}`}
       >
         {children}
@@ -201,7 +245,7 @@ function Light({
   return (
     <button
       type="button"
-      aria-label={label}
+      aria-label={`${label} window`}
       title={label}
       onClick={onClick}
       // hovering the group lights them up even in a background window

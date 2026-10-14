@@ -7,11 +7,14 @@ import { z } from "zod";
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
-export type Win = Rect & {
+export type Win = {
+  // null until it's first dragged. till then css places it, which the server can
+  // render without knowing the screen size
+  rect: Rect | null;
   // focus order, highest is in front
   z: number;
   minimized: boolean;
-  // fills the desktop. x/y/w/h are left alone so unzooming puts it back
+  // fills the desktop. rect is left alone so unzooming puts it back
   zoomed: boolean;
 };
 
@@ -29,7 +32,14 @@ export const MENU_BAR = 36;
 const KEEP_X = 80;
 const KEEP_Y = 28;
 
-export const initialWindows: WindowsState = { windows: {}, top: 0 };
+// the portfolio lives in the browser, so it's open from the first render
+export const BROWSER = "browser";
+const browserWin: Win = { rect: null, z: 1, minimized: false, zoomed: false };
+
+export const initialWindows: WindowsState = {
+  windows: { [BROWSER]: browserWin },
+  top: 1,
+};
 
 function patched(
   state: WindowsState,
@@ -48,11 +58,11 @@ function patched(
 export function opened(
   state: WindowsState,
   id: string,
-  rect: Rect,
+  rect: Rect | null = null,
 ): WindowsState {
   const top = state.top + 1;
   const win = state.windows[id] ?? {
-    ...rect,
+    rect,
     z: top,
     minimized: false,
     zoomed: false,
@@ -90,22 +100,33 @@ export function clampedPosition(
   };
 }
 
+// `rect` is where the drag left it. a window css had placed gets its size here too
 export function moved(
   state: WindowsState,
   id: string,
-  x: number,
-  y: number,
+  rect: Rect,
   bounds: Bounds,
 ): WindowsState {
-  return patched(state, id, (win) => clampedPosition(win.w, x, y, bounds));
+  const at = clampedPosition(rect.w, rect.x, rect.y, bounds);
+  return patched(state, id, () => ({ rect: { ...rect, ...at } }));
 }
 
 export function minimized(state: WindowsState, id: string): WindowsState {
   return patched(state, id, () => ({ minimized: true }));
 }
 
+export function zoomedTo(
+  state: WindowsState,
+  id: string,
+  zoomed: boolean,
+): WindowsState {
+  if (state.windows[id]?.zoomed === zoomed) return state;
+  return patched(state, id, () => ({ zoomed }));
+}
+
 export function toggledZoom(state: WindowsState, id: string): WindowsState {
-  return patched(state, id, (win) => ({ zoomed: !win.zoomed }));
+  const win = state.windows[id];
+  return win ? zoomedTo(state, id, !win.zoomed) : state;
 }
 
 // the front window you can see, for the menu bar's app name
@@ -125,10 +146,9 @@ const saved = z.object({
   windows: z.record(
     z.string(),
     z.object({
-      x: z.number(),
-      y: z.number(),
-      w: z.number(),
-      h: z.number(),
+      rect: z
+        .object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() })
+        .nullable(),
       z: z.number(),
       minimized: z.boolean(),
       zoomed: z.boolean(),
@@ -137,15 +157,21 @@ const saved = z.object({
   top: z.number(),
 });
 
-// a save from an older version, or one someone edited, just starts fresh
+// a save from an older version, or one someone edited, just starts fresh. any
+// link loads the browser showing that page, so it's back out even if it was
+// closed or minimized last time
 export function loaded(raw: string | null): WindowsState {
   if (!raw) return initialWindows;
+  let state: WindowsState;
   try {
     const result = saved.safeParse(JSON.parse(raw));
-    return result.success ? result.data : initialWindows;
+    if (!result.success) return initialWindows;
+    state = result.data;
   } catch {
     return initialWindows;
   }
+  const browser = state.windows[BROWSER];
+  return browser && !browser.minimized ? state : opened(state, BROWSER);
 }
 
 const STORAGE_KEY = "windows";
@@ -167,11 +193,14 @@ function set(next: WindowsState) {
   for (const listener of listeners) listener();
 }
 
+// for handlers outside react that need to know where things are right now
+export const windowsState = () => state;
+
 export function screen(): Bounds {
   return { width: window.innerWidth, height: window.innerHeight };
 }
 
-export function openWindow(id: string, rect: Rect) {
+export function openWindow(id: string, rect: Rect | null = null) {
   set(opened(state, id, rect));
 }
 
@@ -184,12 +213,16 @@ export function focusWindow(id: string) {
 }
 
 // called once when a drag ends. during the drag the frame moves itself
-export function moveWindow(id: string, x: number, y: number) {
-  set(moved(state, id, x, y, screen()));
+export function moveWindow(id: string, rect: Rect) {
+  set(moved(state, id, rect, screen()));
 }
 
 export function minimizeWindow(id: string) {
   set(minimized(state, id));
+}
+
+export function zoomWindow(id: string, zoomed: boolean) {
+  set(zoomedTo(state, id, zoomed));
 }
 
 export function toggleZoom(id: string) {
@@ -205,7 +238,7 @@ export function useWindows() {
       };
     },
     () => state,
-    // the server has no saved positions, so nothing is open yet
+    // the server has no saved positions, so only the browser, where css puts it
     () => initialWindows,
   );
 }
