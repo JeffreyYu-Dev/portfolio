@@ -1,7 +1,8 @@
 # Mail App
 
 Date: 2026-10-13
-Status: Draft for review
+Status: UI superseded by `2026-10-13-yail-design.md`. The sending pipeline,
+schema, spam checks and visitor store described here still apply.
 Builds on: `2026-10-13-macos-desktop-design.md` (adds an app the vision didn't list)
 
 ## Intent
