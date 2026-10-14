@@ -8,7 +8,7 @@ export function SentToast() {
   return (
     // output: a live status region, so screen readers hear "message sent"
     <output
-      className="absolute bottom-6 left-6 z-50 flex items-center gap-4 rounded bg-[#303030] py-3 pr-2 pl-5 text-sm text-white shadow-lg max-md:fixed max-md:bottom-4 max-md:left-4"
+      className="absolute bottom-6 left-6 z-50 flex items-center gap-3 rounded bg-[#303030] py-2 pr-2 pl-4 text-xs text-white shadow-lg max-md:fixed max-md:bottom-4 max-md:left-4"
     >
       Message sent
       <Link
@@ -23,9 +23,9 @@ export function SentToast() {
         type="button"
         aria-label="Dismiss"
         onClick={dismiss}
-        className="grid size-8 place-items-center rounded-full hover:bg-white/10"
+        className="grid size-6 place-items-center rounded-full hover:bg-white/10"
       >
-        <X className="size-4" />
+        <X className="size-3.5" />
       </button>
     </output>
   );

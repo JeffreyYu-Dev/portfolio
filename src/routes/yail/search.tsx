@@ -16,7 +16,7 @@ function Results() {
   const items = search(q, useMail());
   return (
     <>
-      <p className="border-b border-[#e0e0e0] px-6 py-4 text-[#444746]">
+      <p className="border-b border-[#e0e0e0] px-4 py-3 text-[#444746]">
         {q.trim()
           ? `Results for "${q.trim()}"`
           : "Type something to search your mail"}

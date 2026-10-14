@@ -30,13 +30,13 @@ export function InboxTabs({ active }: { active: MailTab }) {
           params={{ box: "inbox" }}
           search={{ tab }}
           style={tab === active ? { color, borderColor: color } : undefined}
-          className="flex h-14 flex-1 items-center gap-4 border-b-[3px] border-transparent px-4 text-[#444746] hover:bg-black/5 md:max-w-64"
+          className="flex h-10 flex-1 items-center gap-3 border-b-[3px] border-transparent px-4 text-[#444746] hover:bg-black/5 md:max-w-48"
         >
-          <Icon className="size-5" />
+          <Icon className="size-4" />
           <span className="font-medium">{label}</span>
           {tab !== "primary" && unread[tab] > 0 && (
             <span
-              className="rounded-full px-2 text-xs text-white"
+              className="rounded-full px-2 text-[11px] text-white"
               style={{ backgroundColor: color }}
             >
               {unread[tab]} new
@@ -78,10 +78,10 @@ export function MessageList({
               aria-label={item.starred ? "Starred" : "Not starred"}
               aria-pressed={item.starred}
               onClick={() => toggleStar(item.id)}
-              className="grid size-10 shrink-0 place-items-center pl-2"
+              className="grid size-8 shrink-0 place-items-center pl-2"
             >
               <Star
-                className={`size-5 ${item.starred ? "fill-[#fbbc04] text-[#fbbc04]" : "text-[#c4c7c5]"}`}
+                className={`size-4 ${item.starred ? "fill-[#fbbc04] text-[#fbbc04]" : "text-[#c4c7c5]"}`}
               />
             </button>
           )}
@@ -89,7 +89,7 @@ export function MessageList({
             <button
               type="button"
               onClick={() => openDraft()}
-              className="flex min-w-0 flex-1 items-center gap-4 py-2.5 pr-4 pl-12 text-left"
+              className="flex min-w-0 flex-1 items-center gap-3 py-1.5 pr-4 pl-10 text-left"
             >
               <Row item={item} />
             </button>
@@ -97,7 +97,7 @@ export function MessageList({
             <Link
               to="/yail/$box/$id"
               params={{ box: linkBox ?? item.box, id: item.id }}
-              className="flex min-w-0 flex-1 items-center gap-4 py-2.5 pr-4"
+              className="flex min-w-0 flex-1 items-center gap-3 py-1.5 pr-4"
             >
               <Row item={item} />
             </Link>
@@ -111,16 +111,16 @@ export function MessageList({
 function Row({ item }: { item: Item }) {
   const weight = item.unread ? "font-bold text-[#1f1f1f]" : "text-[#444746]";
   return (
-    <span className="flex min-w-0 flex-1 gap-1 max-md:flex-col md:items-center md:gap-4">
+    <span className="flex min-w-0 flex-1 gap-1 max-md:flex-col md:items-center md:gap-3">
       <span
-        className={`flex items-center justify-between md:w-48 md:shrink-0 ${weight}`}
+        className={`flex items-center justify-between md:w-36 md:shrink-0 ${weight}`}
       >
         <span
           className={`truncate ${item.box === "drafts" ? "text-[#d93025]" : ""}`}
         >
           {item.from}
         </span>
-        <span className={`shrink-0 text-xs md:hidden ${weight}`}>
+        <span className={`shrink-0 text-[11px] md:hidden ${weight}`}>
           <MailTime iso={item.date} />
         </span>
       </span>
@@ -131,7 +131,7 @@ function Row({ item }: { item: Item }) {
           – {item.body.replace(/\s+/g, " ")}
         </span>
       </span>
-      <span className={`shrink-0 text-xs max-md:hidden ${weight}`}>
+      <span className={`shrink-0 text-[11px] max-md:hidden ${weight}`}>
         <MailTime iso={item.date} />
       </span>
     </span>

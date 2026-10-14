@@ -96,7 +96,7 @@ export function Compose({
   }
 
   const line =
-    "flex items-center gap-2 border-b border-[#e0e0e0] py-2 text-sm";
+    "flex items-center gap-2 border-b border-[#e0e0e0] py-2 text-xs";
   const input =
     "min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#5f6368]";
 
@@ -128,7 +128,7 @@ export function Compose({
             value={fields.name}
             onChange={(e) => change("name")(e.target.value)}
             aria-invalid={!!errors.name}
-            className={`${input} max-w-36`}
+            className={`${input} max-w-28`}
           />
           <label htmlFor={`${id}-email`} className="sr-only">
             Your email
@@ -145,7 +145,7 @@ export function Compose({
           />
         </div>
         {(errors.name || errors.email) && (
-          <p className="pt-1 text-xs text-[#d93025]">
+          <p className="pt-1 text-[11px] text-[#d93025]">
             {errors.name ?? errors.email}
           </p>
         )}
@@ -162,7 +162,7 @@ export function Compose({
           />
         </div>
         {errors.subject && (
-          <p className="pt-1 text-xs text-[#d93025]">{errors.subject}</p>
+          <p className="pt-1 text-[11px] text-[#d93025]">{errors.subject}</p>
         )}
         <label htmlFor={`${id}-body`} className="sr-only">
           Message
@@ -172,10 +172,10 @@ export function Compose({
           value={fields.body}
           onChange={(e) => change("body")(e.target.value)}
           aria-invalid={!!errors.body}
-          className="min-h-24 flex-1 resize-none py-3 text-sm outline-none"
+          className="min-h-20 flex-1 resize-none py-2 text-xs outline-none"
         />
         {errors.body && (
-          <p className="pb-1 text-xs text-[#d93025]">{errors.body}</p>
+          <p className="pb-1 text-[11px] text-[#d93025]">{errors.body}</p>
         )}
         {/* bots fill in every field, people never see this one */}
         <input
@@ -191,7 +191,7 @@ export function Compose({
       {failed && (
         <p
           role="alert"
-          className="mx-4 rounded bg-[#fce8e6] px-3 py-2 text-xs text-[#c5221f]"
+          className="mx-4 rounded bg-[#fce8e6] px-3 py-2 text-[11px] text-[#c5221f]"
         >
           {SEND_FAILED.replace(socials.email, "")}
           <a href={`mailto:${socials.email}`} className="underline">
@@ -200,17 +200,17 @@ export function Compose({
         </p>
       )}
 
-      <div className="flex items-center gap-2 px-4 py-3">
+      <div className="flex items-center gap-2 px-4 py-2">
         <button
           type="submit"
           disabled={sending}
-          className="rounded-full bg-[#0b57d0] px-6 py-2 text-sm font-medium text-white hover:shadow-md disabled:bg-[#0b57d0]/60"
+          className="rounded-full bg-[#0b57d0] px-4 py-2 text-xs font-medium text-white hover:shadow-md disabled:bg-[#0b57d0]/60"
         >
           {sending ? "Sending…" : "Send"}
         </button>
         <span className="flex-1" />
         {confirming && (
-          <span className="flex items-center gap-2 text-xs text-[#444746]">
+          <span className="flex items-center gap-2 text-[11px] text-[#444746]">
             Discard draft?
             <button
               type="button"
@@ -226,11 +226,11 @@ export function Compose({
           onClick={discard}
           aria-label={confirming ? "Discard" : "Discard draft"}
           title="Discard draft"
-          className={`grid size-9 place-items-center rounded-full hover:bg-black/5 ${
+          className={`grid size-7 place-items-center rounded-full hover:bg-black/5 ${
             confirming ? "text-[#d93025]" : "text-[#444746]"
           }`}
         >
-          <Trash2 className="size-5" />
+          <Trash2 className="size-4" />
         </button>
       </div>
     </form>

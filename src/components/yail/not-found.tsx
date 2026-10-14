@@ -4,7 +4,7 @@ export function NotFound() {
   return (
     <div className="grid h-full place-items-center p-10 text-center text-[#444746]">
       <div>
-        <p className="text-lg">This message doesn't exist</p>
+        <p className="text-sm">This message doesn't exist</p>
         <Link
           to="/yail/$box"
           params={{ box: "inbox" }}

@@ -20,10 +20,10 @@ export function ComposeWindow() {
   const big = mode === "expanded";
 
   const box = min
-    ? "absolute right-6 bottom-0 w-72"
+    ? "absolute right-6 bottom-0 w-60"
     : big
       ? "absolute inset-x-[5%] top-[5%] bottom-[5%] md:inset-x-[10%]"
-      : "absolute right-6 bottom-0 h-[min(560px,calc(100%-1rem))] w-[min(500px,calc(100%-3rem))]";
+      : "absolute right-6 bottom-0 h-[min(460px,calc(100%-1rem))] w-[min(420px,calc(100%-3rem))]";
 
   return (
     <>
@@ -43,7 +43,7 @@ export function ComposeWindow() {
             : "max-md:inset-0 max-md:h-auto max-md:w-auto max-md:rounded-none"
         } ${big ? "rounded-b-lg" : ""}`}
       >
-        <header className="flex h-10 shrink-0 items-center bg-[#404040] pl-4 text-sm font-medium text-white">
+        <header className="flex h-8 shrink-0 items-center bg-[#404040] pl-4 text-xs font-medium text-white">
           <button
             type="button"
             onClick={min ? restore : minimise}
@@ -101,7 +101,7 @@ function HeaderButton({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="grid h-full w-9 place-items-center hover:bg-white/10 [&>svg]:size-4"
+      className="grid h-full w-7 place-items-center hover:bg-white/10 [&>svg]:size-3.5"
     >
       {children}
     </button>

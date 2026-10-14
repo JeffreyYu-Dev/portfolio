@@ -24,7 +24,7 @@ export function Avatar({
       aria-hidden="true"
       style={{ backgroundColor: COLORS[Math.abs(hash) % COLORS.length] }}
       className={`grid shrink-0 place-items-center rounded-full font-medium text-white ${
-        size === "sm" ? "size-8 text-sm" : "size-10 text-base"
+        size === "sm" ? "size-6 text-xs" : "size-8 text-sm"
       }`}
     >
       {letter}

@@ -29,7 +29,7 @@ export function Rail({ open, onClose }: { open: boolean; onClose: () => void }) 
       )}
       <nav
         aria-label="Mailboxes"
-        className={`flex w-64 shrink-0 flex-col gap-1 pr-4 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:bg-white max-md:pt-4 max-md:shadow-xl ${
+        className={`flex w-48 shrink-0 flex-col gap-1 pr-4 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:bg-white max-md:pt-4 max-md:shadow-xl ${
           open ? "" : "max-md:hidden"
         }`}
       >
@@ -39,9 +39,9 @@ export function Rail({ open, onClose }: { open: boolean; onClose: () => void }) 
             onClose();
             openDraft();
           }}
-          className="mb-3 ml-2 flex h-14 w-36 items-center gap-3 rounded-2xl bg-[#c2e7ff] px-5 font-medium text-[#001d35] hover:shadow-md"
+          className="mb-3 ml-2 flex h-10 w-28 items-center gap-3 rounded-2xl bg-[#c2e7ff] px-4 font-medium text-[#001d35] hover:shadow-md"
         >
-          <Pencil className="size-5" />
+          <Pencil className="size-4" />
           Compose
         </button>
         {BOXES.map((box) => {
@@ -56,13 +56,13 @@ export function Rail({ open, onClose }: { open: boolean; onClose: () => void }) 
               params={{ box }}
               onClick={onClose}
               aria-current={active ? "page" : undefined}
-              className={`flex h-8 items-center gap-4 rounded-r-full pr-3 pl-6 text-[#202124] hover:bg-black/5 aria-[current=page]:bg-[#d3e3fd] aria-[current=page]:font-semibold ${
+              className={`flex h-7 items-center gap-3 rounded-r-full pr-3 pl-5 text-[#202124] hover:bg-black/5 aria-[current=page]:bg-[#d3e3fd] aria-[current=page]:font-semibold ${
                 box === "inbox" && count ? "font-semibold" : ""
               }`}
             >
-              <Icon className="size-5" />
+              <Icon className="size-4" />
               <span className="flex-1">{boxTitle(box)}</span>
-              {count > 0 && <span className="text-xs">{count}</span>}
+              {count > 0 && <span className="text-[11px]">{count}</span>}
             </Link>
           );
         })}

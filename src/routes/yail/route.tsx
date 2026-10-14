@@ -41,14 +41,14 @@ function Yail() {
   return (
     <div
       // full screen puts the notch over the top bar, so it steps down with it
-      className={`relative flex min-h-dvh flex-col bg-[#f6f8fc] text-sm text-[#1f1f1f] md:h-full md:min-h-0 md:transition-[padding] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! ${
+      className={`relative flex min-h-dvh flex-col bg-[#f6f8fc] text-xs text-[#1f1f1f] md:h-full md:min-h-0 md:transition-[padding] md:duration-[400ms] md:ease-out md:motion-reduce:transition-none! ${
         expanded ? "md:pt-9" : ""
       }`}
     >
       <TopBar onMenu={() => setDrawer((d) => !d)} />
       <div className="flex min-h-0 flex-1">
         <Rail open={drawer} onClose={() => setDrawer(false)} />
-        <main className="min-w-0 flex-1 bg-white md:mr-4 md:mb-4 md:overflow-y-auto md:rounded-2xl">
+        <main className="min-w-0 flex-1 bg-white md:mr-3 md:mb-3 md:overflow-y-auto md:rounded-2xl">
           <Outlet />
         </main>
       </div>
