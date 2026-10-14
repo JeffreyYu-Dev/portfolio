@@ -312,6 +312,7 @@ function NavButton({
 // site's host navigate in place, other sites open in a real tab
 function AddressBar({ pathname }: { pathname: string }) {
   const router = useRouter();
+  const search = useRouterState({ select: (s) => s.location.searchStr });
   // null while not editing, so the field follows the route
   const [draft, setDraft] = useState<string | null>(null);
 
@@ -331,9 +332,9 @@ function AddressBar({ pathname }: { pathname: string }) {
       <input
         aria-label="Address"
         spellCheck={false}
-        value={draft ?? displayAddress(pathname)}
+        value={draft ?? displayAddress(pathname, search)}
         onFocus={(e) => {
-          setDraft(displayAddress(pathname));
+          setDraft(displayAddress(pathname, search));
           e.currentTarget.select();
         }}
         onChange={(e) => setDraft(e.target.value)}

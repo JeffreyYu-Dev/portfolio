@@ -78,3 +78,38 @@ describe("parseAddress", () => {
     });
   });
 });
+
+describe("yail.com", () => {
+  it("shows yail paths under its own host", () => {
+    expect(displayAddress("/yail")).toBe("yail.com");
+    expect(displayAddress("/yail/")).toBe("yail.com");
+    expect(displayAddress("/yail/inbox/welcome")).toBe("yail.com/inbox/welcome");
+  });
+  it("shows the search string", () => {
+    expect(displayAddress("/yail/search", "?q=games")).toBe(
+      "yail.com/search?q=games",
+    );
+    expect(displayAddress("/yail/search", "q=games")).toBe(
+      "yail.com/search?q=games",
+    );
+  });
+  it("leaves lookalike paths on the main host", () => {
+    expect(displayAddress("/yailx")).toBe(`${DISPLAY_HOST}/yailx`);
+  });
+  it.each([
+    ["yail.com", "/yail"],
+    ["YAIL.com", "/yail"],
+    ["www.yail.com/starred/", "/yail/starred"],
+    ["https://yail.com/inbox/welcome", "/yail/inbox/welcome"],
+    ["yail.com/search?q=games", "/yail/search?q=games"],
+    ["yail.com?compose=1", "/yail?compose=1"],
+  ])("%j goes to %j in the browser", (input, path) => {
+    expect(parseAddress(input)).toEqual({ kind: "route", path });
+  });
+  it("still sends other sites to a real tab", () => {
+    expect(parseAddress("notyail.com")).toEqual({
+      kind: "external",
+      url: "https://notyail.com",
+    });
+  });
+});
