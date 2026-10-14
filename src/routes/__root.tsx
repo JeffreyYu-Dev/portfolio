@@ -3,6 +3,7 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  useRouterState,
 } from "@tanstack/react-router";
 import { Boot } from "#/components/boot";
 import { Browser } from "#/components/browser";
@@ -42,6 +43,8 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
   return (
     <>
       <Boot />
@@ -50,8 +53,16 @@ function RootLayout() {
       <MailApp />
       <Desktop>
         <Browser>
-          {/* data-page: what page-transition.ts snapshots when leaving */}
-          <div data-page className="mx-auto w-md pt-20 md:py-12">
+          {/* data-page: what page-transition.ts snapshots when leaving. yail is a
+              whole web app, so it gets the full card instead of the page column */}
+          <div
+            data-page
+            className={
+              pathname === "/yail" || pathname.startsWith("/yail/")
+                ? "min-h-dvh md:h-full md:min-h-0"
+                : "mx-auto w-md pt-20 md:py-12"
+            }
+          >
             <Outlet />
           </div>
         </Browser>

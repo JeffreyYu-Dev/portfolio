@@ -12,10 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as YailRouteRouteImport } from './routes/yail/route'
 import { Route as PostsIdRouteImport } from './routes/posts/$id'
 import { Route as ProjectsIdRouteImport } from './routes/projects/$id'
 import { Route as WorkIdRouteImport } from './routes/work/$id'
 import { Route as WorkWesternRouteRouteImport } from './routes/work/_western/route'
+import { Route as YailIndexRouteImport } from './routes/yail/index'
+import { Route as YailSearchRouteImport } from './routes/yail/search'
+import { Route as YailBoxIndexRouteImport } from './routes/yail/$box/index'
+import { Route as YailBoxIdRouteImport } from './routes/yail/$box/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -30,6 +35,11 @@ const AboutRoute = AboutRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const YailRouteRoute = YailRouteRouteImport.update({
+  id: '/yail',
+  path: '/yail',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsIdRoute = PostsIdRouteImport.update({
@@ -52,15 +62,40 @@ const WorkWesternRouteRoute = WorkWesternRouteRouteImport.update({
   path: '/work',
   getParentRoute: () => rootRouteImport,
 } as any)
+const YailIndexRoute = YailIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => YailRouteRoute,
+} as any)
+const YailSearchRoute = YailSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => YailRouteRoute,
+} as any)
+const YailBoxIndexRoute = YailBoxIndexRouteImport.update({
+  id: '/$box/',
+  path: '/$box/',
+  getParentRoute: () => YailRouteRoute,
+} as any)
+const YailBoxIdRoute = YailBoxIdRouteImport.update({
+  id: '/$box/$id',
+  path: '/$box/$id',
+  getParentRoute: () => YailRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/yail': typeof YailRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/work': typeof WorkWesternRouteRoute
   '/posts/$id': typeof PostsIdRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/work/$id': typeof WorkIdRoute
+  '/yail/search': typeof YailSearchRoute
+  '/yail/': typeof YailIndexRoute
+  '/yail/$box/$id': typeof YailBoxIdRoute
+  '/yail/$box/': typeof YailBoxIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,27 +105,41 @@ export interface FileRoutesByTo {
   '/posts/$id': typeof PostsIdRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/work/$id': typeof WorkIdRoute
+  '/yail/search': typeof YailSearchRoute
+  '/yail': typeof YailIndexRoute
+  '/yail/$box/$id': typeof YailBoxIdRoute
+  '/yail/$box': typeof YailBoxIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/yail': typeof YailRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/work/_western': typeof WorkWesternRouteRoute
   '/posts/$id': typeof PostsIdRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/work/$id': typeof WorkIdRoute
+  '/yail/search': typeof YailSearchRoute
+  '/yail/': typeof YailIndexRoute
+  '/yail/$box/$id': typeof YailBoxIdRoute
+  '/yail/$box/': typeof YailBoxIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/yail'
     | '/about'
     | '/contact'
     | '/work'
     | '/posts/$id'
     | '/projects/$id'
     | '/work/$id'
+    | '/yail/search'
+    | '/yail/'
+    | '/yail/$box/$id'
+    | '/yail/$box/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,19 +149,29 @@ export interface FileRouteTypes {
     | '/posts/$id'
     | '/projects/$id'
     | '/work/$id'
+    | '/yail/search'
+    | '/yail'
+    | '/yail/$box/$id'
+    | '/yail/$box'
   id:
     | '__root__'
     | '/'
+    | '/yail'
     | '/about'
     | '/contact'
     | '/work/_western'
     | '/posts/$id'
     | '/projects/$id'
     | '/work/$id'
+    | '/yail/search'
+    | '/yail/'
+    | '/yail/$box/$id'
+    | '/yail/$box/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  YailRouteRoute: typeof YailRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
   WorkWesternRouteRoute: typeof WorkWesternRouteRoute
@@ -144,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/yail': {
+      id: '/yail'
+      path: '/yail'
+      fullPath: '/yail'
+      preLoaderRoute: typeof YailRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/posts/$id': {
       id: '/posts/$id'
       path: '/posts/$id'
@@ -172,11 +238,58 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkWesternRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/yail/': {
+      id: '/yail/'
+      path: '/'
+      fullPath: '/yail/'
+      preLoaderRoute: typeof YailIndexRouteImport
+      parentRoute: typeof YailRouteRoute
+    }
+    '/yail/search': {
+      id: '/yail/search'
+      path: '/search'
+      fullPath: '/yail/search'
+      preLoaderRoute: typeof YailSearchRouteImport
+      parentRoute: typeof YailRouteRoute
+    }
+    '/yail/$box/': {
+      id: '/yail/$box/'
+      path: '/$box'
+      fullPath: '/yail/$box/'
+      preLoaderRoute: typeof YailBoxIndexRouteImport
+      parentRoute: typeof YailRouteRoute
+    }
+    '/yail/$box/$id': {
+      id: '/yail/$box/$id'
+      path: '/$box/$id'
+      fullPath: '/yail/$box/$id'
+      preLoaderRoute: typeof YailBoxIdRouteImport
+      parentRoute: typeof YailRouteRoute
+    }
   }
 }
 
+interface YailRouteRouteChildren {
+  YailSearchRoute: typeof YailSearchRoute
+  YailIndexRoute: typeof YailIndexRoute
+  YailBoxIdRoute: typeof YailBoxIdRoute
+  YailBoxIndexRoute: typeof YailBoxIndexRoute
+}
+
+const YailRouteRouteChildren: YailRouteRouteChildren = {
+  YailSearchRoute: YailSearchRoute,
+  YailIndexRoute: YailIndexRoute,
+  YailBoxIdRoute: YailBoxIdRoute,
+  YailBoxIndexRoute: YailBoxIndexRoute,
+}
+
+const YailRouteRouteWithChildren = YailRouteRoute._addFileChildren(
+  YailRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  YailRouteRoute: YailRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
   WorkWesternRouteRoute: WorkWesternRouteRoute,
