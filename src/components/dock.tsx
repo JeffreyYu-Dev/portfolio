@@ -3,53 +3,78 @@ import { useBrowser } from "#/lib/browser-store";
 import { toggleNotch } from "#/lib/notch-store";
 import { useGo } from "#/lib/page-transition";
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 // a tiny frosted macOS dock pinned to the bottom edge. a dot marks what's "running"
 export function Dock() {
   const track = useNowPlaying();
   const go = useGo("dock");
   const { expanded } = useBrowser();
+  // pushing the mouse to the bottom edge brings it back while it's tucked away
+  const [peek, setPeek] = useState(false);
+  const hidden = expanded && !peek;
+  const dockRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!expanded) setPeek(false);
+  }, [expanded]);
 
   return (
-    <nav
-      aria-label="Dock"
-      // slides away while the browser fills the screen, like a full-screen mac app
-      inert={expanded}
-      className={`fixed bottom-1.5 left-1/2 z-40 -translate-x-1/2 transition-[translate,opacity] duration-300 ease-out motion-reduce:transition-none! max-md:hidden ${
-        expanded ? "translate-y-[150%] opacity-0" : ""
-      }`}
-    >
-      <div
-        // even padding all round, plus a little extra at the bottom for the running
-        // dots. the radius is the icons' corner plus the padding, so the curves nest
-        className="flex items-center gap-1.5 rounded-xl border border-white/40 bg-white/25 p-1.5 pb-2.5 shadow-[0_8px_30px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.5)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150"
+    <>
+      {expanded && (
+        <div
+          aria-hidden="true"
+          onPointerEnter={() => setPeek(true)}
+          // moving off the edge anywhere but up into the dock hides it again
+          onPointerLeave={(e) => {
+            const into = e.relatedTarget;
+            if (!(into instanceof Node && dockRef.current?.contains(into)))
+              setPeek(false);
+          }}
+          className="fixed inset-x-0 bottom-0 z-40 h-2 max-md:hidden"
+        />
+      )}
+      <nav
+        ref={dockRef}
+        aria-label="Dock"
+        // slides away while the browser fills the screen, like a full-screen mac app
+        inert={hidden}
+        onPointerLeave={() => expanded && setPeek(false)}
+        className={`fixed bottom-1.5 left-1/2 z-40 -translate-x-1/2 transition-[translate,opacity] duration-300 ease-out motion-reduce:transition-none! max-md:hidden ${
+          hidden ? "translate-y-[150%] opacity-0" : ""
+        }`}
       >
-        {/* the portfolio lives in the browser, so it's always running */}
-        <Item label="Zen" running>
-          <Link to="/" onClick={go("/")} aria-label="Zen" className={tile}>
-            <img src="/zen-browser.png" alt="" className="size-full" />
-          </Link>
-        </Item>
-
-        <Item
-          label={track?.playing ? track.title : "Spotify"}
-          running={!!track?.playing}
+        <div
+          // even padding all round, plus a little extra at the bottom for the running
+          // dots. the radius is the icons' corner plus the padding, so the curves nest
+          className="flex items-center gap-1.5 rounded-xl border border-white/40 bg-white/25 p-1.5 pb-2.5 shadow-[0_8px_30px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.5)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150"
         >
-          {/* data-notch-toggle so the notch's outside-press handler leaves this alone */}
-          <button
-            type="button"
-            data-notch-toggle
-            onClick={toggleNotch}
-            aria-label="Now playing"
-            // the logo on a black squircle, like spotify's mac app icon
-            className={`${tile} grid place-items-center rounded-[22%] bg-black`}
+          {/* the portfolio lives in the browser, so it's always running */}
+          <Item label="Zen" running>
+            <Link to="/" onClick={go("/")} aria-label="Zen" className={tile}>
+              <img src="/zen-browser.png" alt="" className="size-full" />
+            </Link>
+          </Item>
+
+          <Item
+            label={track?.playing ? track.title : "Spotify"}
+            running={!!track?.playing}
           >
-            <img src="/spotify.png" alt="" className="size-[70%]" />
-          </button>
-        </Item>
-      </div>
-    </nav>
+            {/* data-notch-toggle so the notch's outside-press handler leaves this alone */}
+            <button
+              type="button"
+              data-notch-toggle
+              onClick={toggleNotch}
+              aria-label="Now playing"
+              // the logo on a black squircle, like spotify's mac app icon
+              className={`${tile} grid place-items-center rounded-[22%] bg-black`}
+            >
+              <img src="/spotify.png" alt="" className="size-[70%]" />
+            </button>
+          </Item>
+        </div>
+      </nav>
+    </>
   );
 }
 
